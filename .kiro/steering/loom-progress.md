@@ -7,8 +7,9 @@ inclusion: manual
 Last updated: 2026-04-08
 
 ## Current Task
-All non-WSL Loom work is complete locally. The product now includes shared graph-backed correction/practical-note workflows, AMS-to-Loom promotion, expanded CMM change-impact support, production-oriented auth/metrics/audit/export hooks, and an Azure-oriented deployment method. Parallel demo work under `demo/` is now rebuilt as a browser-validated static marketing prototype with a 3-slide platform carousel covering the agentic IDE, FalkorDB graph view, and CMM/Hindsight view.
-Next focus: polish demo copy/branding details, deploy a Vercel preview when ready, and keep Windows WSL2 validation as the only deferred platform item for the core Loom stack.
+All non-WSL Loom work is complete locally. Parallel demo work under `demo/` is now a validated static marketing prototype with 3 interactive slides (Agentic IDE, AUTOSAR workflow, Knowledge Foundation graph). KPI claims have been validated with benchmarking (`loom/evals/kpi_eval.py`), and USP comparison section added with real GraphRAG metrics.
+Recent additions: trace_knowledge.py CLI tool for debuggable retrieval, updated comparison cards with defensible claims (100% Traceable, Relationship-Aware Retrieval).
+Next focus: finalize demo for Vercel deployment, validate Windows WSL2 runtime.
 
 ## Status
 - Research: COMPLETE — `research/agentic_memory_architecture_2026.md`
@@ -79,7 +80,9 @@ Next focus: polish demo copy/branding details, deploy a Vercel preview when read
 - Concurrent load validation: COMPLETE — `loom/evals/load_eval.py` now validates `10` concurrent engineer sessions; the final warm-start run passed with `p95` latency about `21.69 ms`
 - Phase 1 local validation rerun: COMPLETE — the full non-WSL stack now passes Docker integration, retrieval/spec-session/AMS evals, and load validation; checkpoint `14.5` remains open only for Windows WSL2
 - Central AI runtime config: IMPLEMENTED — `.kiro/runtime/ai-runtime.env` now centralizes Azure GPT, Azure embeddings, Azure router, and Hindsight runtime settings
-- Demo prototype: IMPLEMENTED — `demo/` now contains a validated static Loom marketing/demo page with a 4-slide carousel, animated Knowledge Foundation graph scene, and rebuilt IDE demos for ETAS ETK / XCP / A2L and AUTOSAR Classic workflows. Slide 4 was reimagined into a cleaner story-first CMM + AMS narrative (changed symbol -> trace blast radius -> recover memory bank -> safe merge guidance) with simpler visuals and readable state transitions. Product naming updated: "FalkorDB" -> "Knowledge Foundation", "Hindsight" -> "AMS System". Problem/solution section expanded with engineer pain points and Loom solutions
+- Demo prototype: UPDATED — `demo/` now contains a validated static Loom marketing/demo page with a 3-slide carousel (4th slide hidden), animated Knowledge Foundation graph scene, rebuilt IDE demos for ETAS ETK / XCP / A2L and AUTOSAR Classic workflows. Product naming: "FalkorDB" -> "Knowledge Foundation", "Hindsight" -> "AMS System". Problem/solution carousel with 7 engineer pain points. Comparison section added with 3 USP cards validated against real benchmarks
+- Demo KPIs: VALIDATED — `loom/evals/kpi_eval.py` benchmarks retrieval speed (5.7x vs SQLite, 1.8x vs Chroma) and token efficiency (81% reduction vs raw chunks); results exported to `loom/artifacts/kpi_eval_results.json`
+- Traceability tooling: IMPLEMENTED — `loom/tools/trace_knowledge.py` CLI provides debuggable retrieval with full provenance chain visualization
 - Demo release gate: UPDATED — slide 4 (CMM + AMS) is intentionally hidden from carousel controls for Vercel deployment until narrative/design is finalized
 - Graph restore on corrected volume: COMPLETE — full curated graph was restored after fixing the FalkorDB data mount and currently reports `39411` mapped nodes, `384763` vector nodes, `744` state edges, and `26` community nodes
 - Local persistence root-cause fixed: COMPLETE — FalkorDB volume now mounts to `/var/lib/falkordb/data`, and append-only persistence survives restart for new writes

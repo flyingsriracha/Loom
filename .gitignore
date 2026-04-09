@@ -20,7 +20,7 @@ build/
 
 # Excluded project folders
 archived/
-tools/
+/tools/
 
 # IDE and editor
 .vscode/

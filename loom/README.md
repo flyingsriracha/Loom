@@ -67,3 +67,49 @@ Validation scripts:
 - `evals/spec_session_eval.py`
 - `evals/ams_eval.py`
 - `evals/load_eval.py`
+
+---
+
+## Traceability Tools
+
+Loom provides debuggable retrieval - every query result can be traced back to its source.
+
+### Knowledge Trace CLI
+
+```bash
+python loom/tools/trace_knowledge.py "your query here"
+```
+
+Example queries:
+```bash
+python loom/tools/trace_knowledge.py "Eth ARXML spec"
+python loom/tools/trace_knowledge.py "CanIf module configuration"
+python loom/tools/trace_knowledge.py "XCP DAQ measurement"
+```
+
+The tool shows:
+1. **Entity Detection** — Query parsed into graph entities
+2. **Graph Traversal** — Path through knowledge graph (Hub → Layer → Module)
+3. **Evidence Nodes** — Retrieved modules/documents with confidence scores
+4. **Provenance Chain** — Full metadata: pipeline, source file, extraction date
+
+Output includes JSON export for programmatic use.
+
+### Provenance API
+
+```bash
+# Get node provenance chain
+curl http://localhost:8080/api/v1/node/{id}/provenance
+
+# Search with source filters
+curl -X POST http://localhost:8080/api/v1/search \
+  -d '{"query":"Eth driver", "source_system":"AUTOSAR-fusion"}'
+```
+
+### In-Chat Tracing
+
+When using the Loom orchestrator, prefix queries with "trace:" to get provenance:
+```
+"Trace: What is the EthIf module?"
+"Show evidence for: XCP DAQ configuration"
+```
