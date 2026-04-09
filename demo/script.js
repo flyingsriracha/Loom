@@ -86,7 +86,7 @@ const a2lBlocks = [
 ];
 
 const nextStepItems = [
-  "Confirm whether ETK is running XCP over CAN, Ethernet, or the target microcontroller debug path.",
+  "Verify ETK debug interface connection (DAP/JTAG/proprietary) and confirm XCP-over-Ethernet link to INCA.",
   "Generate or update the A2L with MEASUREMENT, CHARACTERISTIC, COMPU_METHOD, and RECORD_LAYOUT entries before opening INCA.",
   "Build the DAQ list in order: SET_DAQ_PTR, WRITE_DAQ, SET_DAQ_LIST_MODE, then START_STOP_DAQ_LIST.",
   "Validate scaling, units, and memory addresses against the ECU build before the first calibration session.",
@@ -184,7 +184,7 @@ function restartIdeDemo() {
       delay: 4400,
       run: () => {
         if (resultMemory) {
-          resultMemory.innerHTML = "<strong>Session 12 restored:</strong> ETK bring-up, XCP over CAN baseline, injector timing measurements, 100 ms DAQ budget, low ECU overhead constraint.";
+          resultMemory.innerHTML = "<strong>Session 12 restored:</strong> ETK bring-up, debug interface connected, injector timing measurements, 100 ms DAQ budget, low ECU overhead constraint.";
         }
         if (chatStatus) chatStatus.textContent = "Querying graph";
         setWorkflowState(1);

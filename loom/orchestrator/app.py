@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
@@ -13,10 +14,23 @@ from artifacts.lineage import ArtifactLineageStore
 from orchestrator.audit import OrchestratorAuditLogger
 from orchestrator.clients import AMSClient, CMMClient, LoomServiceClient
 from orchestrator.models import OrchestratorError
+from orchestrator.portal_service import PortalAggregationService
 from orchestrator.spec_session import fallback_queries, render_artifact, resolve_target_path
 from orchestrator.workflow import OrchestratorWorkflow
 
 app = FastAPI(title='Loom Orchestrator', version='0.1.0')
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        'http://localhost:3001',
+        'http://127.0.0.1:3001',
+    ],
+    allow_credentials=True,
+    allow_methods=['*'],
+    allow_headers=['*'],
+)
 settings = load_settings()
 audit_logger = OrchestratorAuditLogger()
 metrics_registry = MetricsRegistry('orchestrator')
@@ -34,6 +48,14 @@ class AskPayload(BaseModel):
 
 class SearchKnowledgePayload(BaseModel):
     query: str = Field(min_length=1)
+
+
+class TraceExplainPayload(BaseModel):
+    query: str = Field(min_length=1)
+    artifact_type: str | None = None
+    include_change_impact: bool = Field(default=False)
+    change_scope: str = Field(default='working_tree')
+    change_depth: int = Field(default=2, ge=1, le=8)
 
 
 class SearchCodePayload(BaseModel):
@@ -260,6 +282,90 @@ async def search_knowledge(payload: SearchKnowledgePayload, context: APIRequestC
     audit_id = audit_logger.record(action='search_knowledge', context=context, request=payload.model_dump(), result=result)
     result['audit_id'] = audit_id
     return result
+
+
+@app.post('/api/v1/trace/explain')
+async def trace_explain(request: Request, payload: TraceExplainPayload, context: APIRequestContext = Depends(_read_context)) -> dict:
+    service = PortalAggregationService(settings=settings, loom_client=LoomServiceClient(settings=settings), cmm_client=CMMClient(settings=settings), ams_client=AMSClient(settings=settings), audit_logger=audit_logger)
+    body = service.trace_explain(
+        query=payload.query,
+        context=context,
+        artifact_type=payload.artifact_type,
+        include_change_impact=payload.include_change_impact,
+        change_scope=payload.change_scope,
+        change_depth=payload.change_depth,
+        orchestrator_base_url=str(request.base_url).rstrip('/'),
+    )
+    audit_id = audit_logger.record(action='trace_explain', context=context, request=payload.model_dump(), result=body)
+    body['audit']['trace_audit_id'] = audit_id
+    body['audit_id'] = audit_id
+    return body
+
+
+@app.get('/api/v1/dashboard/overview')
+async def dashboard_overview(
+    request: Request,
+    audit_limit: int = Query(default=25, ge=1, le=200),
+    change_scope: str = Query(default='working_tree'),
+    change_depth: int = Query(default=2, ge=1, le=8),
+    context: APIRequestContext = Depends(_read_context),
+) -> dict:
+    service = PortalAggregationService(settings=settings, loom_client=LoomServiceClient(settings=settings), cmm_client=CMMClient(settings=settings), ams_client=AMSClient(settings=settings), audit_logger=audit_logger)
+    body = service.dashboard_overview(
+        context=context,
+        audit_limit=audit_limit,
+        change_scope=change_scope,
+        change_depth=change_depth,
+        orchestrator_base_url=str(request.base_url).rstrip('/'),
+    )
+    audit_id = audit_logger.record(
+        action='dashboard_overview',
+        context=context,
+        request={'audit_limit': audit_limit, 'change_scope': change_scope, 'change_depth': change_depth},
+        result=body,
+    )
+    body['audit_id'] = audit_id
+    return body
+
+
+@app.get('/api/v1/dashboard/journey')
+async def dashboard_journey(
+    limit: int = Query(default=50, ge=1, le=500),
+    context: APIRequestContext = Depends(_read_context),
+) -> dict:
+    service = PortalAggregationService(settings=settings, loom_client=LoomServiceClient(settings=settings), cmm_client=CMMClient(settings=settings), ams_client=AMSClient(settings=settings), audit_logger=audit_logger)
+    body = service.dashboard_journey(context=context, limit=limit)
+    audit_id = audit_logger.record(action='dashboard_journey', context=context, request={'limit': limit}, result=body)
+    body['audit_id'] = audit_id
+    return body
+
+
+@app.get('/api/v1/integrations/links')
+async def integration_links(
+    request: Request,
+    query: str | None = Query(default=None),
+    node_id: str | None = Query(default=None),
+    audit_id: str | None = Query(default=None),
+    transcript_ref: str | None = Query(default=None),
+    context: APIRequestContext = Depends(_read_context),
+) -> dict:
+    service = PortalAggregationService(settings=settings, loom_client=LoomServiceClient(settings=settings), cmm_client=CMMClient(settings=settings), ams_client=AMSClient(settings=settings), audit_logger=audit_logger)
+    body = service.integration_links(
+        context=context,
+        query=query,
+        node_id=node_id,
+        audit_id=audit_id,
+        transcript_ref=transcript_ref,
+        orchestrator_base_url=str(request.base_url).rstrip('/'),
+    )
+    recorded_audit_id = audit_logger.record(
+        action='integration_links',
+        context=context,
+        request={'query': query, 'node_id': node_id, 'audit_id': audit_id, 'transcript_ref': transcript_ref},
+        result=body,
+    )
+    body['audit_id'] = recorded_audit_id
+    return body
 
 
 @app.post('/api/v1/search/code')

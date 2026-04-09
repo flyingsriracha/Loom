@@ -2,11 +2,14 @@
 
 ## Overview
 
-Loom is an internal AI-assisted automotive engineering product for three linked workflows:
+Loom is an internal AI-assisted automotive engineering product for four linked workflows:
 
 1. standards-grounded research against ASAM and AUTOSAR knowledge
 2. spec-session authoring for `requirements.md`, `design.md`, and `tasks.md`
 3. development execution with code-aware, memory-aware agent workflows
+4. novice onboarding, traceability review, and development-journey visibility through a Loom-native portal
+
+The portal is a product surface layered on top of the existing services and orchestrator. It is not a replacement for LangGraph, FalkorDB, AMS, or CMM. Those systems remain the execution and storage layers.
 
 Phase 1 seeds Loom from two curated fused source systems:
 
@@ -27,6 +30,7 @@ The system is designed for 2-3 engineers initially, scaling to 10+, with Windows
 - Local-first memory: AMS remains per engineer and preserves objective continuity, steering, and transcript auditability.
 - Code structure is additive: CMM is a bolt-on capability used when code understanding is needed, not a replacement for Loom or AMS.
 - Provenance over convenience: migrated facts must retain source system, source pipeline, source document, confidence, and fusion audit history.
+- Product surface decoupled from runtime: the novice-facing dashboard and traceability UX should evolve as a separate web application that consumes existing APIs rather than being embedded inside LangGraph.
 
 ---
 
@@ -172,6 +176,31 @@ flowchart TB
     WF --> SPEC
     POLICY --> AUDIT
 ```
+
+### Loom Portal UX Surface
+
+The Loom portal is a separate web application that sits above the existing runtime. It provides onboarding, answer traceability, progress visibility, and external-tool launch points while keeping LangGraph as the orchestration runtime and Loom Services as the source of truth for knowledge and provenance.
+
+```mermaid
+flowchart LR
+    User[EngineerOrTrialUser] --> Portal[LoomPortal]
+    Portal --> OrchApi[OrchestratorAPI]
+    Portal --> LoomApi[LoomServicesAPI]
+    OrchApi --> LangGraph[LangGraphOrchestrator]
+    LangGraph --> Ams[AMSOrHindsight]
+    LangGraph --> Cmm[CMM]
+    LoomApi --> Knowledge[KnowledgeAndProvenance]
+    Portal -->|DeepLink| Smith[LangSmithStudio]
+    Portal -->|DeepLink| FalkorUi[FalkorDBUI]
+    Portal -->|DeepLink| HindsightUi[HindsightRawView]
+```
+
+Portal defaults:
+
+- answer-first explanations before raw traces or internal IDs
+- progressive disclosure from summary to evidence to native-tool deep links
+- manual traceability operations for users who want to search by query, node, audit, artifact, project, or objective
+- no duplication of retrieval, memory, provenance, or code-impact business logic in the UI tier
 
 ### Primary Use-Case Overview
 
@@ -632,6 +661,38 @@ CMM is a bolt-on code structure module used when a request needs repository-awar
 
 Phase 1 includes baseline CMM integration for code search and coding-task grounding. Later phases can expand CMM usage for feedback loops, change impact automation, and repository-wide coordination.
 
+### Product Surface: Loom Portal
+
+The Loom portal is a dedicated product surface for novice onboarding, guided traceability, progress review, and external-tool launch paths.
+
+#### Responsibilities
+
+- Provide a first-run wizard for IDE setup, connectivity checks, and guided examples.
+- Expose an answer-level traceability view that combines knowledge, memory, code, workflow, and audit context.
+- Render a development journey dashboard grouped by `project_id` and `objective_id`.
+- Offer context-aware deep links into FalkorDB UI, LangSmith Studio, Hindsight raw views, and any CMM-native UI that becomes available.
+- Keep the UI readable for novice users with plain-language labels and expandable advanced detail.
+
+#### External Interface
+
+```typescript
+type PortalRoute = "/onboarding" | "/trace" | "/journey" | "/launchpad"
+
+interface PortalDataClient {
+  getTraceabilityEnvelope(input: TraceabilityLookup): Promise<TraceabilityEnvelope>
+  getDashboardOverview(projectId: string, objectiveId?: string): Promise<DashboardOverview>
+  getJourney(projectId: string, objectiveId?: string): Promise<JourneyEvent[]>
+  getIntegrationLinks(input: TraceabilityLookup): Promise<IntegrationLink[]>
+}
+```
+
+#### Recommended Implementation Direction
+
+- `Next.js` for the application shell, routing, and deployment flexibility.
+- `shadcn/ui` for open-code, accessible UI primitives that are easy to adapt to Loom language and workflows.
+- `TanStack Query` for async server-state, polling, caching, and mutation orchestration.
+- Deep-link first integration strategy for third-party UIs in v1; embedding remains optional later work.
+
 ### Inter-Module Communication
 
 #### Coding Task Flow
@@ -679,20 +740,38 @@ sequenceDiagram
 ### REST API Endpoints
 
 ```text
-POST   /api/v1/query
-POST   /api/v1/search
+# Existing runtime endpoints
+POST   /api/v1/ask
+POST   /api/v1/search/knowledge
+POST   /api/v1/search/code
+POST   /api/v1/search/code/impact
+POST   /api/v1/memory/retain
+POST   /api/v1/memory/recall
+POST   /api/v1/memory/reflect
+POST   /api/v1/memory/promote
+POST   /api/v1/session/resume
 POST   /api/v1/spec/generate
 POST   /api/v1/spec/update
-POST   /api/v1/ams/retain
-POST   /api/v1/ams/recall
-POST   /api/v1/ams/resume
-GET    /api/v1/node/{id}
+POST   /api/v1/spec/audit
+POST   /api/v1/query
+POST   /api/v1/search
+POST   /api/v1/temporal/query
+POST   /api/v1/ingest
+POST   /api/v1/ingest/validate
 GET    /api/v1/node/{id}/provenance
+GET    /api/v1/diagnostics
+GET    /api/v1/metrics
 GET    /api/v1/health
 GET    /api/v1/health/{service}
+
+# Planned aggregation endpoints for the Loom portal
+POST   /api/v1/trace/explain
+GET    /api/v1/dashboard/overview
+GET    /api/v1/dashboard/journey
+GET    /api/v1/integrations/links
 ```
 
-All REST endpoints require authentication. Engineers have read-only access to Loom and write access to their own AMS scope. Admin has Loom write access.
+All REST endpoints require authentication. Engineers have read-only access to Loom and write access to their own AMS scope. Admin has Loom write access. The planned portal aggregation endpoints combine source-of-truth data from the existing services rather than replacing them.
 
 ---
 
@@ -957,6 +1036,69 @@ class OrchestratorState(TypedDict):
     citations: list[dict] | None
     token_count: int | None
 ```
+
+### Traceability Envelope Model
+
+```python
+from typing import Literal, TypedDict
+
+class TraceabilityEnvelope(TypedDict):
+    answer_summary: str
+    request_context: dict
+    knowledge_trace: list[dict]
+    memory_trace: list[dict]
+    code_trace: list[dict]
+    workflow_trace: list[dict]
+    audit: dict
+    deep_links: list[dict]
+    availability: dict[str, Literal["used", "not_used", "unavailable"]]
+```
+
+The `TraceabilityEnvelope` is a read model for the portal. It normalizes knowledge provenance, AMS recall traces, CMM impact results, orchestrator workflow steps, and audit identifiers into one explainable payload.
+
+### Journey Event Model
+
+```python
+from typing import Literal, TypedDict
+
+class JourneyEvent(TypedDict):
+    event_id: str
+    event_type: Literal[
+        "session_started",
+        "session_resumed",
+        "knowledge_query",
+        "memory_retain",
+        "memory_recall",
+        "memory_reflect",
+        "code_impact",
+        "artifact_revision",
+        "hitl_checkpoint",
+        "audit_export",
+    ]
+    timestamp: str
+    engineer_id: str
+    project_id: str | None
+    objective_id: str | None
+    session_id: str | None
+    audit_id: str | None
+    title: str
+    summary: str
+    related_ids: dict[str, str]
+```
+
+`JourneyEvent` entries are designed for the dashboard timeline and drill-down views. They correlate AMS activity, orchestrator audit records, knowledge traces, code-impact events, and artifact lineage without forcing the UI to query each subsystem separately.
+
+### Correlation and Identity Model
+
+The portal and aggregation APIs should preserve and expose stable correlation identifiers across subsystems:
+
+- request context: `engineer_id`, `project_id`, `objective_id`, `session_id`
+- trace identifiers: `audit_id`, `request_id`, `thread_id`, `transcript_ref`
+- knowledge identifiers: `node_id`, source document ID, source pipeline ID
+- artifact identifiers: `artifact_id`, `artifact_revision_id`
+- code identifiers: impacted symbol ID, file path, or diff scope when provided
+
+These identifiers should be visible in advanced views and deep links, but novice views should surface human-readable summaries first.
 
 ### Docker Compose Configuration Model
 

@@ -13,6 +13,7 @@ from hindsight_client import Hindsight
 
 from common.auth import APIRequestContext
 from common.health import http_check
+from common.langsmith_support import traceable
 from common.settings import Settings, load_settings
 from orchestrator.models import OrchestratorError
 from orchestrator.resume_context import DEFAULT_RESUME_TOKEN_BUDGET, allocate_token_budget, build_resume_snapshot
@@ -68,15 +69,19 @@ class LoomServiceClient:
         except Exception as exc:
             raise OrchestratorError('loom_request_failed', f'Loom service call failed for {path}', 502, {'path': path, 'error': str(exc)})
 
+    @traceable(name='LoomServiceClient.query', run_type='tool')
     def query(self, query: str, *, context: APIRequestContext) -> dict[str, Any]:
         return self.post('/api/v1/query', {'query': query, 'limit': 5}, context=context)
 
+    @traceable(name='LoomServiceClient.search', run_type='tool')
     def search(self, query: str, *, context: APIRequestContext) -> dict[str, Any]:
         return self.post('/api/v1/search', {'query': query, 'limit': 10}, context=context)
 
+    @traceable(name='LoomServiceClient.artifact_context', run_type='tool')
     def artifact_context(self, query: str, artifact_type: str, *, context: APIRequestContext) -> dict[str, Any]:
         return self.post('/api/v1/artifact/context', {'query': query, 'artifact_type': artifact_type, 'limit': 5}, context=context)
 
+    @traceable(name='LoomServiceClient.diagnostics', run_type='tool')
     def diagnostics(self, *, context: APIRequestContext) -> dict[str, Any]:
         try:
             with httpx.Client(base_url=self.settings.loom_service_url, timeout=30.0) as client:
@@ -86,6 +91,7 @@ class LoomServiceClient:
         except Exception as exc:
             raise OrchestratorError('loom_diagnostics_failed', 'Unable to fetch Loom diagnostics', 502, {'error': str(exc)})
 
+    @traceable(name='LoomServiceClient.submit_correction', run_type='tool')
     def submit_correction(self, payload: dict[str, Any], *, context: APIRequestContext) -> dict[str, Any]:
         return self.post('/api/v1/corrections', payload, context=context)
 
@@ -155,6 +161,7 @@ class CMMClient:
                 return payload
         raise OrchestratorError('cmm_parse_failed', 'Unable to parse CMM CLI output', 502, {'stdout': stdout[-2000:]})
 
+    @traceable(name='CMMClient.status', run_type='tool')
     def status(self) -> dict[str, Any]:
         binary = self._binary()
         if binary is None:
@@ -167,18 +174,22 @@ class CMMClient:
         except OrchestratorError as exc:
             return {'available': False, 'reason': exc.code, 'details': exc.details}
 
+    @traceable(name='CMMClient.search_code', run_type='tool')
     def search_code(self, query: str) -> dict[str, Any]:
         project = self._resolve_project()
         return self._run('search_code', {'project': project, 'pattern': query, 'mode': 'compact', 'limit': 10})
 
+    @traceable(name='CMMClient.trace_call_path', run_type='tool')
     def trace_call_path(self, function_name: str) -> dict[str, Any]:
         project = self._resolve_project()
         return self._run('trace_call_path', {'project': project, 'function_name': function_name, 'direction': 'both', 'depth': 3})
 
+    @traceable(name='CMMClient.get_architecture', run_type='tool')
     def get_architecture(self) -> dict[str, Any]:
         project = self._resolve_project()
         return self._run('get_architecture', {'project': project, 'aspects': ['packages', 'services', 'dependencies']})
 
+    @traceable(name='CMMClient.detect_changes', run_type='tool')
     def detect_changes(self, *, scope: str = 'working_tree', depth: int = 2, since: str | None = None) -> dict[str, Any]:
         project = self._resolve_project()
         payload: dict[str, Any] = {
@@ -283,10 +294,12 @@ class AMSClient:
             parts.append(f'Transcript excerpt: {_truncate(transcript_excerpt, 220)}')
         return '\n\n'.join(part for part in parts if part)
 
+    @traceable(name='AMSClient.status', run_type='tool')
     def status(self) -> dict[str, Any]:
-        ok, detail = http_check(self._base_url(), timeout=3.0)
+        ok, detail = http_check(f"{self._base_url()}/health", timeout=3.0)
         return {'available': ok, 'detail': detail, 'phase': 'phase2_live'}
 
+    @traceable(name='AMSClient.retain', run_type='tool')
     def retain(
         self,
         text: str,
@@ -326,6 +339,7 @@ class AMSClient:
         finally:
             self._close_client(client)
 
+    @traceable(name='AMSClient.recall', run_type='tool')
     def recall(
         self,
         query: str,
@@ -355,6 +369,7 @@ class AMSClient:
         finally:
             self._close_client(client)
 
+    @traceable(name='AMSClient.reflect', run_type='tool')
     def reflect(self, question: str, *, context: APIRequestContext) -> dict[str, Any]:
         client = self._client()
         try:
@@ -366,6 +381,7 @@ class AMSClient:
         finally:
             self._close_client(client)
 
+    @traceable(name='AMSClient.resume', run_type='tool')
     def resume(self, *, context: APIRequestContext, token_budget: int = DEFAULT_RESUME_TOKEN_BUDGET) -> dict[str, Any]:
         allocations = allocate_token_budget(token_budget)
         section_queries = {
@@ -423,6 +439,7 @@ class AMSClient:
             'result': snapshot,
         }
 
+    @traceable(name='AMSClient.seed_from_project', run_type='tool')
     def seed_from_project(self, *, steering_paths: list[str], progress_path: str | None, context: APIRequestContext) -> dict[str, Any]:
         ordered_paths: list[Path] = []
         seen: set[str] = set()

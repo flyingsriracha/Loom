@@ -10,6 +10,12 @@ def _bool_env(name: str, default: bool = False) -> bool:
     return _get(name, str(default)).strip().lower() in {'1', 'true', 'yes', 'on'}
 
 
+def _default_service_host(container_host: str) -> str:
+    if os.path.exists('/.dockerenv'):
+        return container_host
+    return 'localhost'
+
+
 RUNTIME_ENV = load_runtime_env()
 
 
@@ -59,7 +65,7 @@ class Settings:
 
 
 def load_settings() -> Settings:
-    hindsight_host = _get('HINDSIGHT_HOST', 'hindsight') or 'hindsight'
+    hindsight_host = _get('HINDSIGHT_HOST', _default_service_host('hindsight')) or _default_service_host('hindsight')
     hindsight_api_port = int(_get('HINDSIGHT_API_PORT', '8888') or '8888')
     return Settings(
         falkordb_host=_get('FALKORDB_HOST', 'localhost') or 'localhost',

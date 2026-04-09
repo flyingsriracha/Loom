@@ -113,3 +113,87 @@ When using the Loom orchestrator, prefix queries with "trace:" to get provenance
 "Trace: What is the EthIf module?"
 "Show evidence for: XCP DAQ configuration"
 ```
+
+---
+
+## Portal and Aggregation APIs
+
+Loom now includes a separate portal app under `../loom-portal` and a new aggregation layer in the orchestrator for novice-friendly traceability and progress views.
+
+### Portal app
+
+```bash
+cd ../loom-portal
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+The portal expects the orchestrator at `http://localhost:8080` by default and lets users enter:
+- `X-API-Key`
+- `X-Engineer-Id`
+- `X-Session-Id`
+- `X-Objective-Id`
+- `X-Project-Id`
+
+### Portal-facing orchestrator endpoints
+
+```bash
+# Explain one answer with normalized knowledge + memory + code + workflow traces
+curl -X POST http://localhost:8080/api/v1/trace/explain \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: $LOOM_API_KEY" \
+  -d '{"query":"What are XCP timing constraints?","include_change_impact":true}'
+
+# Objective-level dashboard overview
+curl http://localhost:8080/api/v1/dashboard/overview \
+  -H "X-API-Key: $LOOM_API_KEY" \
+  -H "X-Project-Id: proj-1" \
+  -H "X-Objective-Id: obj-1"
+
+# Timeline of normalized journey events
+curl http://localhost:8080/api/v1/dashboard/journey \
+  -H "X-API-Key: $LOOM_API_KEY" \
+  -H "X-Project-Id: proj-1" \
+  -H "X-Objective-Id: obj-1"
+
+# Deep links to FalkorDB UI, Hindsight, LangGraph, LangSmith, and CMM UI when configured
+curl "http://localhost:8080/api/v1/integrations/links?query=XCP&node_id=node-1" \
+  -H "X-API-Key: $LOOM_API_KEY"
+```
+
+### Optional UI link environment variables
+
+These power the portal's deep-link launchpad:
+
+- `LOOM_SERVICE_PUBLIC_URL`
+- `ORCHESTRATOR_PUBLIC_URL`
+- `FALKORDB_UI_URL`
+- `HINDSIGHT_UI_URL`
+- `LANGGRAPH_UI_URL`
+- `LANGSMITH_UI_URL`
+- `CMM_UI_URL`
+
+The orchestrator now allows localhost portal origins (`3000` and `3001`) for browser-based development.
+
+### Optional LangSmith tracing
+
+Loom now supports optional LangSmith instrumentation at the orchestrator workflow, portal aggregation, tool-client, and Graphiti Azure/OpenAI wrapper layers.
+
+Enable it with environment variables:
+
+```bash
+export LANGSMITH_TRACING=true
+export LANGSMITH_API_KEY=replace-with-your-key
+export LANGSMITH_PROJECT=loom
+# optional but recommended for deep links
+export LANGSMITH_UI_URL=https://smith.langchain.com
+```
+
+When enabled, traces capture:
+- orchestrator workflow execution and verification stages
+- Loom service, AMS, and CMM client calls
+- portal aggregation calls such as `trace/explain` and dashboard endpoints
+- Graphiti Azure/OpenAI client calls when Graphiti is using Azure OpenAI
+
+The integration is optional: if LangSmith is unset, Loom keeps running normally.

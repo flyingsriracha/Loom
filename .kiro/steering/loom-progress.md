@@ -7,17 +7,17 @@ inclusion: manual
 Last updated: 2026-04-08
 
 ## Current Task
-All non-WSL Loom work is complete locally. Parallel demo work under `demo/` is now a validated static marketing prototype with 3 interactive slides (Agentic IDE, AUTOSAR workflow, Knowledge Foundation graph). KPI claims have been validated with benchmarking (`loom/evals/kpi_eval.py`), and USP comparison section added with real GraphRAG metrics.
-Recent additions: trace_knowledge.py CLI tool for debuggable retrieval, updated comparison cards with defensible claims (100% Traceable, Relationship-Aware Retrieval).
-Next focus: finalize demo for Vercel deployment, validate Windows WSL2 runtime.
+All non-WSL Loom runtime work remains complete locally. Parallel demo work under `demo/` is still a validated static marketing prototype with 3 interactive slides, benchmark-backed KPI claims, and defensible comparison cards.
+The first novice-facing Loom portal slice is now implemented. The orchestrator exposes normalized traceability and dashboard aggregation endpoints, and `loom-portal/` provides a working Next.js shell for onboarding, explain-this-answer traces, and development-journey views.
+Next focus: refine the portal UX, add optional LangSmith instrumentation, run live browser validation against the local Loom stack, then return to broader deployment polish and Windows WSL2 validation.
 
 ## Status
 - Research: COMPLETE — `research/agentic_memory_architecture_2026.md`
 - Design decisions doc: ACTIVE source of why — `research/loom_system_design_decisions.md`
 - Steering: `loom-core.md` ACTIVE, `loom-progress.md` ACTIVE
-- Requirements: UPDATED — reflects two curated seed sources, Graphiti as required, and spec-session workflow
-- Design doc: UPDATED — rewritten using `requirements.md` as source of truth; includes verified Graphiti adapter appendix
-- Tasks doc: UPDATED — phased full-development plan aligned to requirements and design, with completed foundation items now checked off
+- Requirements: UPDATED — now includes novice onboarding, unified traceability UX, development journey dashboard, external integrations, and a separate Loom portal surface
+- Design doc: UPDATED — now adds Loom portal architecture, portal-first UX principles, aggregation API direction, and traceability/journey read models alongside the existing runtime design
+- Tasks doc: UPDATED — phased full-development plan now includes a new workstream for portal onboarding, explain-this-answer UX, journey dashboard, deep links, and optional LangSmith instrumentation
 - Runtime foundation: LIVE — `falkordb`, `loom-services`, and `orchestrator` containers are up and healthy
 - Python environment: READY — `loom/.venv` created and dependencies installed, including `graphiti-core[falkordb]`
 - Graphiti smoke script: PASSING — bootstrap and live JSON episode ingestion both work against FalkorDB
@@ -83,6 +83,12 @@ Next focus: finalize demo for Vercel deployment, validate Windows WSL2 runtime.
 - Demo prototype: UPDATED — `demo/` now contains a validated static Loom marketing/demo page with a 3-slide carousel (4th slide hidden), animated Knowledge Foundation graph scene, rebuilt IDE demos for ETAS ETK / XCP / A2L and AUTOSAR Classic workflows. Product naming: "FalkorDB" -> "Knowledge Foundation", "Hindsight" -> "AMS System". Problem/solution carousel with 7 engineer pain points. Comparison section added with 3 USP cards validated against real benchmarks
 - Demo KPIs: VALIDATED — `loom/evals/kpi_eval.py` benchmarks retrieval speed (5.7x vs SQLite, 1.8x vs Chroma) and token efficiency (81% reduction vs raw chunks); results exported to `loom/artifacts/kpi_eval_results.json`
 - Traceability tooling: IMPLEMENTED — `loom/tools/trace_knowledge.py` CLI provides debuggable retrieval with full provenance chain visualization
+- Portal UX direction: IMPLEMENTED (initial slice) — Loom now has a separate `loom-portal/` app on top of the orchestrator and knowledge services, with deep-link-first integrations for FalkorDB UI, Hindsight, LangSmith, LangGraph, and any future CMM-native UI
+- Portal aggregation API: IMPLEMENTED — orchestrator now exposes `/api/v1/trace/explain`, `/api/v1/dashboard/overview`, `/api/v1/dashboard/journey`, and `/api/v1/integrations/links`
+- Portal validation: COMPLETE (initial) — orchestrator unit tests pass with the new routes, and `loom-portal` passes `npm run lint` plus `npm run build`
+- LangSmith instrumentation: IMPLEMENTED (optional) — orchestrator workflows, portal aggregation, client/tool boundaries, and Graphiti Azure/OpenAI wrappers now emit LangSmith traces when `LANGSMITH_TRACING` and `LANGSMITH_API_KEY` are configured
+- Portal live smoke: COMPLETE (initial) — local orchestrator on `127.0.0.1:8081` and portal dev server on `127.0.0.1:3001` were exercised successfully; trace and overview endpoints returned live data from the current code
+- Portal browser validation: COMPLETE — guided examples, explicit connect/apply flow, trace rendering, metric refresh, and timeline updates were validated in a live browser session; remaining hydration warning is a dev-only browser-tool artifact
 - Demo release gate: UPDATED — slide 4 (CMM + AMS) is intentionally hidden from carousel controls for Vercel deployment until narrative/design is finalized
 - Graph restore on corrected volume: COMPLETE — full curated graph was restored after fixing the FalkorDB data mount and currently reports `39411` mapped nodes, `384763` vector nodes, `744` state edges, and `26` community nodes
 - Local persistence root-cause fixed: COMPLETE — FalkorDB volume now mounts to `/var/lib/falkordb/data`, and append-only persistence survives restart for new writes
@@ -133,9 +139,36 @@ Next focus: finalize demo for Vercel deployment, validate Windows WSL2 runtime.
 - Windows Docker (WSL2) validation is still pending, so checkpoint `14.5` is only locally satisfied today
 
 ## Next Steps
-1. Polish `demo/` copy, branding, and presentation details before public presentation or Vercel preview handoff
-2. Run the documented deployment method with real deployment secrets and infrastructure-specific values when you are ready to publish beyond local development
-3. Decide whether checkpoint `14.5` is acceptable as local-complete pending WSL2, or leave Phase 1 formally open until Windows validation is run
-4. If containerized CMM becomes a requirement, package a Linux binary plus repo/index state instead of relying on the host-native CLI
-5. Monitor upstream Graphiti `add_episode_bulk` Azure GPT-5 compatibility, but keep sequential `add_episode` as the supported path
-6. Optionally tighten retrieval quality so more domain prompts resolve without search fallback heuristics
+1. Refine the `loom-portal/` UX so onboarding, trace details, and journey summaries feel production-ready rather than scaffold-level
+2. Add richer portal-level explanations and friendlier deep-link labels for novice users before external demos
+3. Rebuild or redeploy the containerized orchestrator so the new portal endpoints are available on the primary runtime port, not only the local dev instance
+4. Polish `demo/` copy, branding, and presentation details before public presentation or Vercel preview handoff
+5. Decide whether checkpoint `14.5` is acceptable as local-complete pending WSL2, or leave Phase 1 formally open until Windows validation is run
+6. If containerized CMM becomes a requirement, package a Linux binary plus repo/index state instead of relying on the host-native CLI
+
+## Technical Corrections
+
+### ETK Communication Architecture Fix (2026-04-09)
+**Issue**: Demo incorrectly stated "XCP over CAN" as an option for ETK communication.
+**Root Cause**: AI hallucination — no ETK entries existed in the knowledge foundation. The claim was fabricated without verification.
+**Correction**:
+- ETK connects via **debug interfaces** (DAP/JTAG/proprietary), NOT CAN
+- ETK provides **XCP-over-Ethernet** to measurement tools (INCA)
+- XCP-over-CAN is a separate architecture requiring XCP driver in ECU code
+**Files Updated**: `demo/script.js`, `demo/DEMO_SCENARIOS_BACKGROUND.md`
+**Source**: ASAM MCD-1 XCP documentation, Vector VX1000 product pages
+
+### ETK Knowledge Added to Loom FalkorDB (2026-04-09)
+**Added Nodes**:
+- `ETK` (Protocol) — ETAS Emulator Test Kit
+- `FETK` (Protocol) — ETAS Fast Emulator Test Kit  
+- `VX1000` (Protocol) — Vector measurement hardware
+
+**Status**: Nodes created directly in FalkorDB graph. Semantic search requires embedding generation (happens during standard ingestion). Direct Cypher queries work.
+
+**Verification**:
+```cypher
+MATCH (p:Protocol) WHERE p.id IN ['ETK', 'FETK', 'VX1000'] RETURN p.id, p.name, p.tool_interface
+```
+
+**Note**: Legacy SQLite entry in `/tools/ASAMKnowledgeDB/fused_knowledge.db` should be considered deprecated.

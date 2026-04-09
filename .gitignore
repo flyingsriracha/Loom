@@ -45,6 +45,7 @@ falkordb_data/
 
 # Node modules (if any)
 node_modules/
+.next/
 
 # Test artifacts
 .coverage

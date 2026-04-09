@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Loom is an internal AI-assisted automotive engineering product for standards research, spec-session authoring, and development execution. It combines a centralized ASAM/AUTOSAR knowledge graph, per-engineer session memory, code structure awareness, and a LangGraph orchestrator that enforces research-before-output discipline. Phase 1 seeds Loom from two curated fused source systems: `tools/ASAMKnowledgeDB` for ASAM knowledge and `tools/autosar-fusion` for AUTOSAR, virtual ECU, FMI, SSP, DCP, FIBEX, and related knowledge. These curated sources preserve upstream provenance from Mistral OCR, Docling, Kimi-K2.5, and virtualECU ingestion pipelines; they do not imply that every raw file on disk has already been processed. The system is designed for 2-3 engineers initially, scaling to 10+, across heterogeneous IDEs (Claude Code, Kiro, Cursor, VS Code, Antigravity).
+Loom is an internal AI-assisted automotive engineering product for standards research, spec-session authoring, development execution, and traceable workflow visibility. It combines a centralized ASAM/AUTOSAR knowledge graph, per-engineer session memory, code structure awareness, and a LangGraph orchestrator that enforces research-before-output discipline. A separate Loom-native product surface will provide novice onboarding, manual traceability tools, and a development journey dashboard on top of those existing services. Phase 1 seeds Loom from two curated fused source systems: `tools/ASAMKnowledgeDB` for ASAM knowledge and `tools/autosar-fusion` for AUTOSAR, virtual ECU, FMI, SSP, DCP, FIBEX, and related knowledge. These curated sources preserve upstream provenance from Mistral OCR, Docling, Kimi-K2.5, and virtualECU ingestion pipelines; they do not imply that every raw file on disk has already been processed. The system is designed for 2-3 engineers initially, scaling to 10+, across heterogeneous IDEs (Claude Code, Kiro, Cursor, VS Code, Antigravity).
 
 ## Glossary
 
@@ -264,3 +264,63 @@ Loom is an internal AI-assisted automotive engineering product for standards res
 3. THE system SHALL store Artifact_Lineage linking prompt or inputs, generated artifacts, subsequent revisions, and key design decisions.
 4. WHEN an artifact is revised in a later session, THE AMS_Solver SHALL preserve prior intent, unresolved questions, and key decisions so follow-on sessions do not drift.
 5. ENGINEERS SHALL be able to audit why an artifact changed by reviewing linked transcript or transcript-reference, steering context, and cited knowledge sources.
+
+### Requirement 19: Novice Onboarding and Guided Usage
+
+**User Story:** As a first-time user in Cursor, Claude Code, Kiro, VS Code, or a similar IDE, I want Loom to guide me through setup and my first successful workflow, so that I can get value from the system without already understanding MCP internals, traceability jargon, or the underlying module boundaries.
+
+#### Acceptance Criteria
+
+1. THE product SHALL provide a Loom-native onboarding surface that guides a user through IDE selection, authentication setup, API or MCP connectivity checks, and initial request-context setup.
+2. THE onboarding flow SHALL include at least one guided example demonstrating knowledge retrieval, memory recall, and code-impact tracing in plain language.
+3. THE onboarding surface SHALL explain the meaning of `engineer_id`, `project_id`, `objective_id`, and `session_id` without requiring the user to read implementation documentation first.
+4. WHEN a dependency is unavailable or misconfigured, THE onboarding flow SHALL present a plain-language explanation of the failure and the next recommended action.
+5. THE onboarding experience SHALL support heterogeneous IDE environments and SHALL NOT assume a single vendor-specific workflow.
+
+### Requirement 20: Unified Traceability UX
+
+**User Story:** As an engineer using Loom output in a real project, I want every answer to expose a single explainable trace view, so that I can trust, verify, and debug what the system did without manually stitching together knowledge citations, memory results, code impact, and orchestrator logs.
+
+#### Acceptance Criteria
+
+1. THE product SHALL provide a normalized `TraceabilityEnvelope` that combines knowledge provenance, AMS trace or recall evidence, CMM code-impact context, orchestrator workflow steps, request context, and audit identifiers.
+2. EVERY user-facing answer surfaced through the Loom portal SHALL support an "explain this answer" interaction with answer-first summary text followed by expandable knowledge, memory, code, and workflow sections.
+3. IF a subsystem did not contribute to a response, THEN THE traceability view SHALL explicitly mark that subsystem as `not_used` or `unavailable` rather than silently omitting it.
+4. THE traceability experience SHALL support both human-readable summaries and machine-readable structured payloads for automation or export.
+5. THE traceability surface SHALL preserve stable follow-up identifiers including node IDs, transcript references, audit IDs, artifact revision IDs, `objective_id`, `session_id`, and `project_id` where applicable.
+
+### Requirement 21: Development Journey Dashboard
+
+**User Story:** As an engineer or evaluator during a trial period, I want a dashboard that shows my development journey across sessions, memories, code impact, and artifacts, so that I can quickly understand whether Loom is helping me make progress and where the system influenced the work.
+
+#### Acceptance Criteria
+
+1. THE product SHALL provide a development journey dashboard organized by `project_id` and `objective_id`.
+2. THE dashboard SHALL render a timeline of normalized `JourneyEvent` entries including session start or resume, memory retain or recall, knowledge query, code-impact analysis, artifact revision, and human-in-the-loop checkpoint events.
+3. EACH journey event SHALL support drill-down into linked provenance, code-impact output, transcript references, artifact lineage, and audit metadata when those details exist.
+4. THE dashboard SHALL provide a concise overview of current objective status, open threads, recent decisions, traceability completeness, and recent code-impact findings.
+5. THE dashboard SHALL allow a user to understand primary progress without requiring them to inspect raw LangSmith, FalkorDB, Hindsight, or CMM-native UIs.
+
+### Requirement 22: External Tool Integration and Deep Links
+
+**User Story:** As an advanced user or admin, I want Loom to connect me to the native UIs of the underlying systems, so that I can jump from the simple Loom view into deeper inspection tools without losing the context of the answer or workflow I am investigating.
+
+#### Acceptance Criteria
+
+1. THE product SHALL provide context-aware deep links from the Loom portal to FalkorDB UI, LangSmith Studio or Agent Server surfaces, Hindsight raw views, and any available CMM-native interface.
+2. WHEN possible, THE deep-link layer SHALL propagate correlation context such as query text, node ID, audit ID, thread ID, `project_id`, `objective_id`, and `session_id`.
+3. THE first implementation SHALL prefer deep links over embedded third-party iframes or panels.
+4. IF an external integration is unavailable, unconfigured, or blocked by authentication, THEN the Loom portal SHALL degrade gracefully and describe the missing dependency instead of failing the primary UI flow.
+5. LangSmith integration SHALL be optional and SHALL NOT be required for core Loom operation, onboarding, or dashboard usage.
+
+### Requirement 23: Portal Architecture and Manual Traceability Operations
+
+**User Story:** As an admin designing Loom for novice and advanced users, I want a dedicated Loom-native portal on top of the existing services, so that product UX can evolve independently from LangGraph runtime internals while still exposing manual traceability operations for users who need direct inspection.
+
+#### Acceptance Criteria
+
+1. THE product SHALL implement a separate Loom portal web application instead of placing the dashboard inside the LangGraph runtime itself.
+2. THE portal SHALL consume existing Loom service and orchestrator APIs as sources of truth and SHALL NOT duplicate retrieval, provenance, memory, or code-impact business logic in the UI tier.
+3. THE portal SHALL support progressive disclosure, with plain-language defaults for novice users and deeper technical trace views for advanced users.
+4. THE portal SHALL expose manual traceability operations that allow a user to search or inspect by query, node ID, audit ID, artifact revision, `objective_id`, `session_id`, or `project_id`.
+5. THE portal SHALL use UI language that explains the workflow in user terms such as `Why this answer`, `What memory was used`, `What code is affected`, and `What happened this week` rather than relying on internal agent jargon.

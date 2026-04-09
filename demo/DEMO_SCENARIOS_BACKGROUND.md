@@ -71,8 +71,10 @@ Real ASAM glossary concepts used in the narrative:
 
 ETK-specific operational background used in the script:
 
-- ETK / FETK interfaces are used for direct ECU access during measurement and calibration.
+- ETK / FETK interfaces connect to the ECU microcontroller via debug interfaces (DAP, JTAG, or proprietary debug ports), NOT via vehicle bus networks like CAN.
+- The ETK hardware provides XCP-over-Ethernet to the measurement tool (INCA), enabling high-bandwidth data acquisition with minimal ECU runtime impact.
 - ETK workflows are designed for low-overhead acquisition of ECU variables while keeping development-tool connectivity practical for INCA-style workflows.
+- Note: XCP-over-CAN is a separate architecture where an XCP driver is integrated into ECU software and uses the vehicle CAN bus. ETK bypasses this by accessing ECU memory directly through debug interfaces.
 
 ### Engineering Storyline
 The demo intentionally models a realistic question sequence:

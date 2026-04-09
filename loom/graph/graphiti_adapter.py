@@ -10,6 +10,7 @@ from graphiti_core.embedder.client import EmbedderClient
 from pydantic import BaseModel, Field
 
 from common.settings import Settings, load_settings
+from common.langsmith_support import wrap_openai_client
 from retrieval.embeddings import encode_text, encode_texts
 
 
@@ -161,11 +162,11 @@ def build_graphiti(settings: Settings | None = None):
             raise RuntimeError('Graphiti requires AZURE_OPENAI_* or OPENAI_API_KEY to initialize.')
         return Graphiti(graph_driver=driver)
 
-    azure_client = AsyncAzureOpenAI(
+    azure_client = wrap_openai_client(AsyncAzureOpenAI(
         azure_endpoint=settings.azure_openai_endpoint,
         api_key=settings.azure_openai_api_key,
         api_version=settings.azure_openai_api_version,
-    )
+    ))
     llm_config = LLMConfig(
         api_key=settings.azure_openai_api_key,
         model=settings.azure_openai_llm_deployment,
@@ -178,11 +179,11 @@ def build_graphiti(settings: Settings | None = None):
         reasoning_model_name=settings.azure_openai_llm_model_name,
     )
     if settings.azure_openai_embedding_deployment:
-        embedding_client = AsyncAzureOpenAI(
+        embedding_client = wrap_openai_client(AsyncAzureOpenAI(
             azure_endpoint=settings.azure_openai_endpoint,
             api_key=settings.azure_openai_api_key,
             api_version=settings.azure_openai_embedding_api_version or settings.azure_openai_api_version,
-        )
+        ))
         embedder = AzureOpenAIEmbedderClient(
             azure_client=embedding_client,
             model=settings.azure_openai_embedding_deployment,

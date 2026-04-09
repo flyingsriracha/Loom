@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import json
 from pathlib import Path
+from typing import Any
 
 from common.auth import APIRequestContext
 from graph.identities import stable_id
@@ -30,13 +31,39 @@ class OrchestratorAuditLogger:
             handle.write(json.dumps(payload, ensure_ascii=True) + '\n')
         return audit_id
 
-
-    def export(self, *, output_dir: str, limit: int | None = None) -> dict[str, object]:
+    def list_records(
+        self,
+        *,
+        limit: int | None = None,
+        engineer_id: str | None = None,
+        project_id: str | None = None,
+        objective_id: str | None = None,
+        session_id: str | None = None,
+        actions: set[str] | None = None,
+    ) -> list[dict[str, Any]]:
         records = []
         if self.path.exists():
             records = [json.loads(line) for line in self.path.read_text().splitlines() if line.strip()]
+        filtered: list[dict[str, Any]] = []
+        for record in records:
+            context = record.get('request_context') or {}
+            if engineer_id and context.get('engineer_id') != engineer_id:
+                continue
+            if project_id and context.get('project_id') != project_id:
+                continue
+            if objective_id and context.get('objective_id') != objective_id:
+                continue
+            if session_id and context.get('session_id') != session_id:
+                continue
+            if actions and record.get('action') not in actions:
+                continue
+            filtered.append(record)
         if limit is not None:
-            records = records[-limit:]
+            filtered = filtered[-limit:]
+        return list(reversed(filtered))
+
+    def export(self, *, output_dir: str, limit: int | None = None) -> dict[str, object]:
+        records = self.list_records(limit=limit)
         export_dir = Path(output_dir)
         export_dir.mkdir(parents=True, exist_ok=True)
         timestamp = datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')

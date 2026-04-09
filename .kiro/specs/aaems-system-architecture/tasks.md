@@ -399,6 +399,44 @@ Implementation stack:
     - [x] Added Prometheus-style `/api/v1/metrics`, request IDs, audit export, and deployment/operations runbooks.
     - _Requirements: 10.4, 14.6, 15.1_
 
+- [ ] 18. Loom portal, traceability UX, and novice onboarding
+  - [x] 18.1 Update the spec package for the portal direction.
+    - [x] Extended `requirements.md`, `design.md`, and `tasks.md` with novice onboarding, unified traceability UX, development journey dashboard, external integrations, and portal architecture.
+    - _Requirements: 19.1–23.5_
+  - [x] 18.2 Define unified traceability aggregation contracts.
+    - [x] Added `TraceabilityEnvelope` response contracts and `/api/v1/trace/explain` aggregation path in the orchestrator layer.
+    - [x] Normalized knowledge provenance, AMS trace output, CMM code impact, workflow steps, request context, and audit metadata through `portal_service.py`.
+    - _Requirements: 20.1–20.5, 23.2_
+  - [x] 18.3 Define journey dashboard read models and aggregation endpoints.
+    - [x] Added `JourneyEvent` contracts plus `/api/v1/dashboard/overview` and `/api/v1/dashboard/journey`.
+    - [x] Correlated project, objective, session, audit, transcript reference, and artifact revision data for timeline rendering via orchestrator audit-log normalization.
+    - _Requirements: 21.1–21.5, 23.4_
+  - [x] 18.4 Scaffold the separate Loom portal application.
+    - [x] Created the dedicated portal app shell in `loom-portal/` with authenticated context inputs and novice-friendly trace/journey views.
+    - [x] Implemented the initial stack with `Next.js`, `shadcn/ui`, and `TanStack Query`.
+    - _Requirements: 19.1, 23.1–23.3_
+  - [x] 18.5 Build the first-run wizard and guided example flow.
+    - [x] Added a first-run configuration card with Loom context headers and guided example queries.
+    - _Requirements: 19.1–19.5_
+  - [x] 18.6 Build the explain-this-answer experience.
+    - [x] Added answer-first summaries, knowledge/memory/code/workflow tabs, and deep-link launch actions in the portal trace explorer.
+    - _Requirements: 20.1–20.5_
+  - [x] 18.7 Build the development journey dashboard.
+    - [x] Added overview cards for current objective status, progress counters, and recent code-impact findings.
+    - [x] Added a normalized timeline view backed by orchestrator audit records.
+    - _Requirements: 21.1–21.5_
+  - [x] 18.8 Build the external tool launchpad and deep-link layer.
+    - [x] Added context-aware deep links for FalkorDB UI, LangSmith, Hindsight, LangGraph, and any configured CMM UI.
+    - [x] Kept the first implementation deep-link-first and deferred embedded third-party panes.
+    - _Requirements: 22.1–22.5_
+  - [x] 18.9 Add optional LangSmith instrumentation and documentation.
+    - [x] Added optional LangSmith instrumentation for orchestrator workflows, portal aggregation services, client/tool boundaries, and Graphiti Azure/OpenAI wrappers.
+    - [x] Kept LangSmith optional for core Loom operation, onboarding, and dashboard use.
+    - _Requirements: 22.5, 23.1–23.2_
+  - [x] 18.10 Add portal-focused tests and novice-trial validation.
+    - [x] Validated the novice flow with live browser testing: connect, run guided example, inspect traces, and confirm dashboard/timeline updates without falling back to raw CLI or curl workflows.
+    - _Requirements: 19.1–23.5_
+
 ## Notes
 
 - This plan is phased, but the file is intended to remain the single development task list for the full product.

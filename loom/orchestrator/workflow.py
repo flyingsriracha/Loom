@@ -5,6 +5,7 @@ from typing import Any, TypedDict
 from langgraph.graph import END, START, StateGraph
 
 from common.auth import APIRequestContext
+from common.langsmith_support import traceable
 from orchestrator.classifier import classify_request
 from orchestrator.clients import AMSClient, CMMClient, LoomServiceClient
 from orchestrator.models import ClassificationResult, OrchestratorError, OrchestratorResponse
@@ -46,6 +47,7 @@ class OrchestratorWorkflow:
         self.ams = ams_client or AMSClient()
         self.graph = self._build_graph().compile()
 
+    @traceable(name='OrchestratorWorkflow.run', run_type='chain')
     def run(self, *, query: str, context: APIRequestContext, artifact_type: str | None = None) -> OrchestratorResponse:
         initial: WorkflowState = {
             'query': query,
@@ -102,6 +104,7 @@ class OrchestratorWorkflow:
             return 'code'
         return 'draft'
 
+    @traceable(name='OrchestratorWorkflow.research', run_type='chain')
     def _research(self, state: WorkflowState) -> WorkflowState:
         classification = state['classification']
         context = state['context']
@@ -140,6 +143,7 @@ class OrchestratorWorkflow:
             return True
         return any(term in query for term in _RESUME_QUERY_TERMS)
 
+    @traceable(name='OrchestratorWorkflow.memory', run_type='chain')
     def _memory(self, state: WorkflowState) -> WorkflowState:
         if self._should_use_resume_context(state):
             memory = self.ams.resume(context=state['context'])
@@ -152,6 +156,7 @@ class OrchestratorWorkflow:
             return 'code'
         return 'draft'
 
+    @traceable(name='OrchestratorWorkflow.code', run_type='chain')
     def _code(self, state: WorkflowState) -> WorkflowState:
         query = state['query']
         lower = query.lower()
@@ -175,6 +180,7 @@ class OrchestratorWorkflow:
             warnings.append(f'cmm_unavailable:{exc.code}')
             return {'code': {'ok': False, 'error': exc.to_dict()['error']}, 'warnings': warnings}
 
+    @traceable(name='OrchestratorWorkflow.draft', run_type='chain')
     def _draft(self, state: WorkflowState) -> WorkflowState:
         classification = state['classification']
         route = classification.route
@@ -206,6 +212,7 @@ class OrchestratorWorkflow:
             'citations': citations,
         }
 
+    @traceable(name='OrchestratorWorkflow.verify', run_type='chain')
     def _verify(self, state: WorkflowState) -> WorkflowState:
         classification = state['classification']
         route = classification.route
