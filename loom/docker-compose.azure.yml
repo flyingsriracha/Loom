@@ -1,0 +1,26 @@
+services:
+  falkordb:
+    restart: unless-stopped
+    environment:
+      FALKORDB_ARGS: --timeout 0 --appendonly yes --appendfsync everysec --save "" --stop-writes-on-bgsave-error no
+
+  loom-services:
+    restart: unless-stopped
+    environment:
+      LOOM_DEPLOYMENT_ENV: production
+      LOOM_ALLOW_LOCAL_DEV_BYPASS: "false"
+      LOOM_AUDIT_EXPORT_DIR: /app/artifacts/exports
+    ports:
+      - "8090:8090"
+
+  orchestrator:
+    restart: unless-stopped
+    environment:
+      LOOM_DEPLOYMENT_ENV: production
+      LOOM_ALLOW_LOCAL_DEV_BYPASS: "false"
+      LOOM_AUDIT_EXPORT_DIR: /app/artifacts/exports
+    ports:
+      - "8080:8080"
+
+  hindsight:
+    restart: unless-stopped

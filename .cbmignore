@@ -1,0 +1,27 @@
+# CMM ignore file — only index Loom development code
+# Ignore everything except loom/ and tools/
+FromMarc/
+virtualECU/
+archived/
+examples/
+research/
+*.db
+*.sqlite
+*.zip
+*.png
+*.svg
+*.pdf
+*.pptx
+*.xlsx
+*.docx
+*.log
+*.DS_Store
+__pycache__/
+.venv/
+node_modules/
+*.pyc
+fused_vector_store/
+asam_vector_store/
+docling_vector_store/
+vecu_vector_store/
+vecu_extract_vectors/

@@ -1,0 +1,12 @@
+{
+  "retain_ok": true,
+  "project_id_propagated": true,
+  "resume_ok": true,
+  "resume_has_sections": true,
+  "seed_ok": true,
+  "seed_mode": "bundled_summary",
+  "seed_bundle_chars": 739,
+  "seed_compact": true,
+  "recall_ok": true,
+  "recall_result_count": 27
+}

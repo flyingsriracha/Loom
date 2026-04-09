@@ -1,0 +1,84 @@
+{
+  "provider": "azure",
+  "api_version": "2025-03-01-preview",
+  "model": "gpt-5.4-mini",
+  "deployment": "gpt54mini",
+  "local_embedder_fallback": true,
+  "episodes_benchmarked": 6,
+  "sequential": {
+    "elapsed_ms": 51980.19,
+    "per_episode": [
+      {
+        "name": "autosar_e2e_library_v1",
+        "elapsed_ms": 9387.99,
+        "nodes": 5,
+        "edges": 1,
+        "communities": 0
+      },
+      {
+        "name": "autosar_e2e_library_v2",
+        "elapsed_ms": 7937.76,
+        "nodes": 5,
+        "edges": 3,
+        "communities": 0
+      },
+      {
+        "name": "asam_xcp_protocol_v1",
+        "elapsed_ms": 8848.31,
+        "nodes": 3,
+        "edges": 2,
+        "communities": 0
+      },
+      {
+        "name": "asam_xcp_protocol_v2",
+        "elapsed_ms": 9650.06,
+        "nodes": 5,
+        "edges": 10,
+        "communities": 0
+      },
+      {
+        "name": "autosar_comm_module",
+        "elapsed_ms": 8998.63,
+        "nodes": 5,
+        "edges": 4,
+        "communities": 0
+      },
+      {
+        "name": "asam_xcp_transport",
+        "elapsed_ms": 7157.42,
+        "nodes": 4,
+        "edges": 4,
+        "communities": 0
+      }
+    ],
+    "search_snapshot": {
+      "search_results": 0,
+      "search__edge_results": 0,
+      "search__node_results": 0,
+      "search__episode_results": 0
+    }
+  },
+  "bulk_error": {
+    "type": "BadRequestError",
+    "message": "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+    "elapsed_ms": 20226.58
+  },
+  "bulk_retry_without_uuids": {
+    "ok": true,
+    "episodes": 2,
+    "nodes": 7,
+    "edges": 6,
+    "communities": 0,
+    "note": "Graphiti bulk can succeed when UUIDs are omitted, but the full benchmark still hits GPT-5 Azure max_tokens incompatibility in another path."
+  },
+  "temporal_smoke": {
+    "episodes_retrieved": 2,
+    "search_results": 5
+  },
+  "conclusion": [
+    "Sequential add_episode works with Azure GPT-5.4 mini plus local MiniLM embeddings.",
+    "Focused temporal retrieval works on a fresh group.",
+    "Bulk add_episode_bulk remains partially incompatible with Azure GPT-5 because an internal path still sends max_tokens.",
+    "Deterministic seed migration and direct Chroma import remain the recommended seed path."
+  ]
+}

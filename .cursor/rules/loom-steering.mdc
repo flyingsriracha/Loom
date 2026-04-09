@@ -1,0 +1,13 @@
+---
+description: Loom steering and progress handoff protocol
+alwaysApply: true
+---
+
+# Loom Steering
+
+- At session start, read `.kiro/steering/loom-core.md` and `.kiro/steering/loom-progress.md` before doing substantive work.
+- Treat `.kiro/steering/loom-progress.md` as the project handoff source of truth over chat summaries.
+- Update `.kiro/steering/loom-progress.md` whenever milestones, decisions, blockers, or next steps change.
+- Always refresh `.kiro/steering/loom-progress.md` before summarizing, handing off, clearing context, or ending a long session.
+- Keep the progress tracker concise: replace stale status instead of appending noisy session logs.
+- Preserve Loom architectural rules: no guessing on ASAM/AUTOSAR facts, no mock migration data, and always keep provenance.

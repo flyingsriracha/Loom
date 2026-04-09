@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loom Architecture Explorer</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: rgba(15, 23, 42, 0.88);
+      --panel-soft: rgba(30, 41, 59, 0.72);
+      --text: #e5eefc;
+      --muted: #9fb1cf;
+      --accent: #64b5f6;
+      --accent-2: #8b5cf6;
+      --accent-3: #34d399;
+      --border: rgba(148, 163, 184, 0.18);
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      --code: #0f172a;
+    }
+
+    body.light {
+      --bg: #f3f7ff;
+      --panel: rgba(255, 255, 255, 0.92);
+      --panel-soft: rgba(241, 245, 249, 0.92);
+      --text: #132238;
+      --muted: #51627e;
+      --accent: #2563eb;
+      --accent-2: #7c3aed;
+      --accent-3: #059669;
+      --border: rgba(15, 23, 42, 0.08);
+      --shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+      --code: #e9eef8;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif; background: radial-gradient(circle at top right, rgba(100,181,246,0.14), transparent 28%), radial-gradient(circle at top left, rgba(139,92,246,0.12), transparent 24%), var(--bg); color: var(--text); }
+    a { color: inherit; }
+
+    .app {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      align-self: start;
+      height: 100vh;
+      padding: 28px 22px;
+      border-right: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(15,23,42,0.85), rgba(15,23,42,0.65));
+      backdrop-filter: blur(18px);
+      overflow-y: auto;
+    }
+
+    body.light .sidebar {
+      background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(246,248,252,0.88));
+    }
+
+    .brand {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .brand-mark {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: var(--shadow);
+    }
+
+    .brand h1 {
+      font-size: 1.05rem;
+      margin: 0;
+      line-height: 1.15;
+    }
+
+    .brand p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .sidebar .control-group {
+      display: grid;
+      gap: 10px;
+      margin: 22px 0;
+    }
+
+    .theme-toggle, .topbar button, .view-pill, .zoom-btn, .modal-close {
+      border: 1px solid var(--border);
+      background: var(--panel-soft);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font: inherit;
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+    }
+
+    .theme-toggle:hover, .topbar button:hover, .view-pill:hover, .zoom-btn:hover, .modal-close:hover {
+      transform: translateY(-1px);
+      border-color: rgba(100,181,246,0.45);
+      background: rgba(100,181,246,0.12);
+    }
+
+    .nav-title {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin: 26px 0 10px;
+    }
+
+    .nav-links {
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      padding: 10px 12px;
+      border-radius: 10px;
+      color: var(--muted);
+      border: 1px solid transparent;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+      border-color: var(--border);
+      background: rgba(100,181,246,0.10);
+    }
+
+    .sidebar-note {
+      margin-top: 26px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--panel-soft);
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    main {
+      padding: 28px 34px 60px;
+      min-width: 0;
+    }
+
+    .hero {
+      display: grid;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .hero-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      border-radius: 24px;
+      padding: 28px;
+      backdrop-filter: blur(18px);
+    }
+
+    .eyebrow {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--accent);
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .hero h2 {
+      margin: 0 0 10px;
+      font-size: clamp(2rem, 3vw, 3.5rem);
+      line-height: 1.05;
+    }
+
+    .hero p {
+      margin: 0;
+      font-size: 1rem;
+      line-height: 1.65;
+      color: var(--muted);
+      max-width: 980px;
+    }
+
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin: 22px 0 8px;
+    }
+
+    .stat-card {
+      background: var(--panel-soft);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      min-height: 120px;
+    }
+
+    .stat-card .label {
+      color: var(--muted);
+      font-size: 0.86rem;
+      margin-bottom: 8px;
+    }
+
+    .stat-card .value {
+      font-size: 1.75rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .stat-card .meta {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .section {
+      margin-top: 28px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 24px;
+      backdrop-filter: blur(18px);
+    }
+
+    .section h3 {
+      margin: 0 0 10px;
+      font-size: 1.45rem;
+    }
+
+    .section p.section-copy {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 14px 0 18px;
+    }
+
+    .view-pill.active {
+      background: linear-gradient(135deg, rgba(100,181,246,0.22), rgba(139,92,246,0.16));
+      border-color: rgba(100,181,246,0.45);
+      color: var(--text);
+    }
+
+    .diagram-panel {
+      display: none;
+      gap: 14px;
+    }
+
+    .diagram-panel.active {
+      display: grid;
+    }
+
+    .diagram-card {
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      background: rgba(15, 23, 42, 0.38);
+    }
+
+    body.light .diagram-card {
+      background: rgba(255,255,255,0.65);
+    }
+
+    .diagram-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel-soft);
+    }
+
+    .diagram-toolbar .title {
+      font-weight: 700;
+    }
+
+    .toolbar-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .diagram-stage {
+      position: relative;
+      overflow: auto;
+      padding: 18px;
+      min-height: 440px;
+      background: linear-gradient(180deg, rgba(15,23,42,0.12), rgba(15,23,42,0.04));
+    }
+
+    .diagram-scale {
+      transform-origin: top left;
+      transition: transform 150ms ease;
+      display: inline-block;
+      min-width: 100%;
+    }
+
+    .diagram-stage pre.mermaid {
+      margin: 0;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 14px;
+    }
+
+    .info-card {
+      padding: 18px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: var(--panel-soft);
+    }
+
+    .info-card h4 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .info-card p, .info-card li {
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .info-card ul {
+      margin: 10px 0 0 18px;
+      padding: 0;
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .legend-item {
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: var(--panel-soft);
+    }
+
+    .legend-item strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .footer-note {
+      margin-top: 24px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    dialog {
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 0;
+      width: min(94vw, 1400px);
+      background: var(--panel);
+      color: var(--text);
+      box-shadow: var(--shadow);
+    }
+
+    dialog::backdrop {
+      background: rgba(2, 6, 23, 0.72);
+      backdrop-filter: blur(6px);
+    }
+
+    .modal-shell {
+      display: grid;
+      gap: 12px;
+      padding: 20px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .modal-body {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      overflow: auto;
+      max-height: 78vh;
+      background: var(--panel-soft);
+    }
+
+    .muted { color: var(--muted); }
+    .badge-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    .badge {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(100,181,246,0.13);
+      border: 1px solid rgba(100,181,246,0.28);
+      font-size: 0.86rem;
+      color: var(--text);
+    }
+
+    @media (max-width: 1080px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { position: relative; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+      main { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        <div>
+          <h1>Loom Architecture Explorer</h1>
+          <p>Interactive browser view for system design, runtime topology, and use cases.</p>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <button class="theme-toggle" id="themeToggle">Toggle Theme</button>
+      </div>
+
+      <div class="nav-title">Navigate</div>
+      <nav class="nav-links">
+        <a href="#overview">Layered Overview</a>
+        <a href="#use-cases">Use Cases</a>
+        <a href="#deployment">Deployment</a>
+        <a href="#dataflow">Data Flow</a>
+        <a href="#modules">Module Guide</a>
+        <a href="#notes">Implementation Notes</a>
+      </nav>
+
+      <div class="sidebar-note">
+        <strong>Current implementation note</strong><br />
+        Community summaries currently persist to a local cache file for retrieval UX because live <code>CommunitySummary</code> writes are still timing out in FalkorDB.
+      </div>
+    </aside>
+
+    <main>
+      <section class="hero hero-card">
+        <div class="eyebrow">Interactive Architecture</div>
+        <h2>Loom System Design and Use-Case Explorer</h2>
+        <p>
+          This browser dashboard packages the current Loom architecture into a review-friendly, diagram-first view.
+          It combines the layered system, runtime topology, curated data flow, and primary engineer use cases into a single interface.
+        </p>
+
+        <div class="badge-row">
+          <span class="badge">Loom + FalkorDB + Graphiti</span>
+          <span class="badge">AMS: Hindsight</span>
+          <span class="badge">CMM: codebase-memory-mcp</span>
+          <span class="badge">Spec sessions + coding workflows</span>
+        </div>
+
+        <div class="topbar">
+          <button data-scroll="#overview">Open Overview</button>
+          <button data-scroll="#deployment">Open Deployment View</button>
+          <button data-scroll="#dataflow">Open Data Flow</button>
+          <button data-scroll="#modules">Open Module Guide</button>
+        </div>
+      </section>
+
+      <section class="stats">
+        <div class="stat-card">
+          <div class="label">Phase 1 Seed Sources</div>
+          <div class="value">2</div>
+          <div class="meta">`ASAMKnowledgeDB` and `autosar-fusion` are the initial system of record.</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Knowledge Store</div>
+          <div class="value">FalkorDB</div>
+          <div class="meta">Shared graph store with Graphiti attached for temporal and retrieval layers.</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Temporal State</div>
+          <div class="value">744</div>
+          <div class="meta">Bootstrapped `HAS_STATE` relations across standards, protocols, and modules.</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Communities</div>
+          <div class="value">25</div>
+          <div class="meta">Generated community summaries are currently cached for global retrieval.</div>
+        </div>
+      </section>
+
+      <section class="section" id="overview">
+        <h3>Layered System Overview</h3>
+        <p class="section-copy">A one-glance architecture map showing the IDE entry point, orchestration layer, shared Loom knowledge layer, local AMS/CMM modules, and final outputs.</p>
+        <div class="diagram-card">
+          <div class="diagram-toolbar">
+            <div class="title">Layered Architecture</div>
+            <div class="toolbar-buttons">
+              <button class="zoom-btn" data-action="zoom-out">-</button>
+              <button class="zoom-btn" data-action="reset">Reset</button>
+              <button class="zoom-btn" data-action="zoom-in">+</button>
+              <button class="zoom-btn" data-action="expand">Expand</button>
+            </div>
+          </div>
+          <div class="diagram-stage">
+            <div class="diagram-scale">
+<pre class="mermaid">
+flowchart TB
+    IDE[Engineer's IDE&lt;br/&gt;Claude Code / Cursor / Kiro / VS Code / etc.]
+
+    subgraph L3[Layer 3: LangGraph Orchestrator]
+        MCP[Single MCP / Tool Entry Point]
+        ROUTER[Request Classification&lt;br/&gt;domain / memory / code / coding_task / spec_session / general]
+        WF[Workflow Engine&lt;br/&gt;Research -&gt; Memory -&gt; Code -&gt; Draft -&gt; Verify -&gt; Output]
+        POLICY[Compliance / Traceability / Audit]
+        MCP --&gt; ROUTER --&gt; WF --&gt; POLICY
+    end
+
+    subgraph L2A[Layer 2A: Loom]
+        subgraph LS[Loom Services]
+            API[REST / Service API]
+            MIG[Seed Migration + Incremental Ingestion]
+            TEMP[Temporal State Layer&lt;br/&gt;HAS_STATE / validFrom / validTo / txFrom / txTo]
+            PROV[Provenance Resolver]
+            RET[GraphRAG Retrieval Pipeline]
+            COMM[Community Builder&lt;br/&gt;Leiden clustering + summaries]
+            ART[Artifact Context / Lineage Hooks]
+        end
+
+        subgraph GL[Knowledge Layer]
+            ADAPTER[Graphiti Adapter]
+            FALKOR[(FalkorDB)]
+            GRAPHITI[Graphiti Temporal Engine]
+            CCACHE[(Community Cache Fallback)]
+        end
+
+        API --&gt; TEMP
+        API --&gt; PROV
+        API --&gt; RET
+        API --&gt; ART
+        MIG --&gt; ADAPTER
+        TEMP --&gt; ADAPTER
+        PROV --&gt; ADAPTER
+        RET --&gt; ADAPTER
+        COMM --&gt; CCACHE
+        ADAPTER &lt;--&gt; GRAPHITI
+        GRAPHITI &lt;--&gt; FALKOR
+        RET &lt;--&gt; FALKOR
+    end
+
+    subgraph L2B[Layer 2B: AMS Solver]
+        AMS[Hindsight AMS&lt;br/&gt;per-engineer session memory&lt;br/&gt;retain / recall / reflect / resume]
+    end
+
+    subgraph L2C[Layer 2C: CMM]
+        CMM[codebase-memory-mcp&lt;br/&gt;repo graph / call paths / impact / architecture]
+    end
+
+    subgraph SRC[Phase 1 Curated Sources]
+        ASAM[ASAMKnowledgeDB&lt;br/&gt;structured + reference + audit + vectors]
+        AUTOSAR[autosar-fusion&lt;br/&gt;structured + reference + audit + vectors]
+    end
+
+    subgraph OUT[Outputs]
+        ANSWERS[Cited Domain Answers]
+        CODEOUT[Grounded Coding Guidance]
+        SPEC[Requirements / Design / Tasks Revisions]
+        AUDIT[Audit / Lineage / Progress Tracking]
+    end
+
+    IDE --&gt;|MCP / HTTP| MCP
+    POLICY --&gt; API
+    POLICY --&gt; AMS
+    POLICY --&gt; CMM
+    ASAM --&gt; MIG
+    AUTOSAR --&gt; MIG
+    WF --&gt; ANSWERS
+    WF --&gt; CODEOUT
+    WF --&gt; SPEC
+    POLICY --&gt; AUDIT
+</pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="use-cases">
+        <h3>Primary Use Cases</h3>
+        <p class="section-copy">The dominant engineer-facing workflows: domain Q&amp;A, coding tasks, spec sessions, and admin migration/bootstrap flows.</p>
+        <div class="diagram-card">
+          <div class="diagram-toolbar">
+            <div class="title">Use-Case Flow</div>
+            <div class="toolbar-buttons">
+              <button class="zoom-btn" data-action="zoom-out">-</button>
+              <button class="zoom-btn" data-action="reset">Reset</button>
+              <button class="zoom-btn" data-action="zoom-in">+</button>
+              <button class="zoom-btn" data-action="expand">Expand</button>
+            </div>
+          </div>
+          <div class="diagram-stage">
+            <div class="diagram-scale">
+<pre class="mermaid">
+sequenceDiagram
+    participant IDE as Engineer IDE
+    participant Orch as Orchestrator
+    participant Loom as Loom Services
+    participant Temporal as Temporal/Provenance
+    participant Retrieval as Retrieval Pipeline
+    participant AMS as AMS Solver
+    participant CMM as CMM
+    participant Graph as FalkorDB + Graphiti
+
+    rect rgb(235, 245, 255)
+        Note over IDE,Graph: 1. Domain Knowledge Query
+        IDE-&gt;&gt;Orch: ask("What are XCP timing constraints?")
+        Orch-&gt;&gt;Loom: /api/v1/query
+        Loom-&gt;&gt;Retrieval: global search -&gt; local search -&gt; rerank
+        Retrieval-&gt;&gt;Graph: graph + vector retrieval
+        Loom-&gt;&gt;Temporal: provenance + optional temporal resolution
+        Temporal-&gt;&gt;Graph: evidence chain lookup
+        Loom--&gt;&gt;Orch: cited results + warnings
+        Orch--&gt;&gt;IDE: answer with evidence chain
+    end
+
+    rect rgb(245, 255, 240)
+        Note over IDE,Graph: 2. Coding Task
+        IDE-&gt;&gt;Orch: ask("Implement XCP CONNECT handler")
+        Orch-&gt;&gt;Loom: standards / artifact context
+        Orch-&gt;&gt;AMS: recall prior decisions
+        Orch-&gt;&gt;CMM: search symbols / trace call paths / impact
+        Loom-&gt;&gt;Graph: provenance-grounded domain lookup
+        CMM--&gt;&gt;Orch: code structure context
+        AMS--&gt;&gt;Orch: session memory
+        Orch--&gt;&gt;IDE: grounded coding guidance
+    end
+
+    rect rgb(255, 247, 235)
+        Note over IDE,Graph: 3. Spec Session
+        IDE-&gt;&gt;Orch: generate_spec_artifact("design" or "tasks")
+        Orch-&gt;&gt;Loom: retrieve standards-grounded context
+        Orch-&gt;&gt;AMS: objective / steering / unresolved questions
+        Loom-&gt;&gt;Graph: domain + provenance + temporal lookup
+        Orch--&gt;&gt;IDE: revised artifact + citations + lineage intent
+    end
+
+    rect rgb(250, 240, 255)
+        Note over IDE,Graph: 4. Seed / Admin Migration
+        IDE-&gt;&gt;Loom: /admin/migration/structured/run
+        Loom-&gt;&gt;Graph: create domain nodes + provenance + state anchors
+        IDE-&gt;&gt;Loom: /admin/migration/vector/run
+        Loom-&gt;&gt;Graph: import 384-d embeddings + document linkage
+        IDE-&gt;&gt;Loom: /admin/temporal/bootstrap
+        Loom-&gt;&gt;Graph: create HAS_STATE edges
+        IDE-&gt;&gt;Loom: /admin/retrieval/communities/refresh
+        Loom-&gt;&gt;Retrieval: regenerate community summaries/cache
+    end
+</pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="deployment">
+        <h3>Deployment and Runtime Topology</h3>
+        <p class="section-copy">How the containers, native tools, and persisted volumes fit together on a developer machine.</p>
+        <div class="diagram-card">
+          <div class="diagram-toolbar">
+            <div class="title">Deployment Topology</div>
+            <div class="toolbar-buttons">
+              <button class="zoom-btn" data-action="zoom-out">-</button>
+              <button class="zoom-btn" data-action="reset">Reset</button>
+              <button class="zoom-btn" data-action="zoom-in">+</button>
+              <button class="zoom-btn" data-action="expand">Expand</button>
+            </div>
+          </div>
+          <div class="diagram-stage">
+            <div class="diagram-scale">
+<pre class="mermaid">
+flowchart LR
+    subgraph DEV[Developer Machine]
+        IDE[IDE / MCP Client]
+        subgraph DOCKER[Docker Compose]
+            ORCH[Orchestrator Container]
+            LOOM[Loom Services Container]
+            FDB[FalkorDB Container]
+            AMSC[Hindsight Container&lt;br/&gt;Phase 2+]
+        end
+        CMM[CMM Native Binary]
+        CACHE[(Community Cache File)]
+    end
+
+    subgraph DATA[Persisted Data]
+        FDATA[(falkordb_data)]
+        HDATA[(hindsight_data)]
+    end
+
+    IDE --&gt;|MCP / HTTP| ORCH
+    ORCH --&gt; LOOM
+    ORCH --&gt; AMSC
+    ORCH --&gt; CMM
+    LOOM --&gt; FDB
+    LOOM --&gt; CACHE
+    FDB --- FDATA
+    AMSC --- HDATA
+</pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="dataflow">
+        <h3>Curated Data Flow</h3>
+        <p class="section-copy">How curated SQLite and Chroma assets become a graph-backed, provenance-aware, temporally queryable knowledge system.</p>
+        <div class="diagram-card">
+          <div class="diagram-toolbar">
+            <div class="title">Curated Seed Data Flow</div>
+            <div class="toolbar-buttons">
+              <button class="zoom-btn" data-action="zoom-out">-</button>
+              <button class="zoom-btn" data-action="reset">Reset</button>
+              <button class="zoom-btn" data-action="zoom-in">+</button>
+              <button class="zoom-btn" data-action="expand">Expand</button>
+            </div>
+          </div>
+          <div class="diagram-stage">
+            <div class="diagram-scale">
+<pre class="mermaid">
+flowchart LR
+    subgraph SOURCES[Curated Sources]
+        ASQL[ASAM fused SQLite]
+        ACV[ASAM Chroma vectors]
+        AUSQL[AUTOSAR fused SQLite]
+        AUCV[AUTOSAR Chroma vectors]
+    end
+
+    subgraph LOADERS[Load / Normalize]
+        SCAN[Curated Scanner]
+        DMIG[Deterministic Migrator]
+        VIMP[Vector Importer]
+        TBOOT[Temporal Bootstrap]
+    end
+
+    subgraph KNOWLEDGE[Knowledge Graph]
+        SS[SourceSystem / SourcePipeline / SourceDocument]
+        DOM[Domain Nodes]
+        TXT[TextChunk embeddings]
+        AUD[MigrationRun / AuditEvent / FusionAssessment]
+        STATE[State Nodes + HAS_STATE]
+        FDB[(FalkorDB)]
+        GRAPHITI[Graphiti]
+    end
+
+    subgraph RETRIEVE[Retrieval]
+        COMM[Community Builder / Cache]
+        GLOB[Global Search]
+        LOC[Local Search]
+        RER[MMR Reranker]
+        OUT[Cited Answers]
+    end
+
+    ASQL --&gt; SCAN
+    AUSQL --&gt; SCAN
+    ASQL --&gt; DMIG
+    AUSQL --&gt; DMIG
+    ACV --&gt; VIMP
+    AUCV --&gt; VIMP
+    DMIG --&gt; SS
+    DMIG --&gt; DOM
+    DMIG --&gt; AUD
+    VIMP --&gt; TXT
+    VIMP --&gt; SS
+    DOM --&gt; TBOOT
+    TBOOT --&gt; STATE
+    DOM --&gt; GRAPHITI
+    STATE --&gt; GRAPHITI
+    GRAPHITI &lt;--&gt; FDB
+    SS --&gt; FDB
+    TXT --&gt; FDB
+    AUD --&gt; FDB
+    COMM --&gt; GLOB
+    FDB --&gt; LOC
+    GLOB --&gt; LOC
+    LOC --&gt; RER --&gt; OUT
+</pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="modules">
+        <h3>Module Guide</h3>
+        <p class="section-copy">A GUI-friendly breakdown of the major layers, their responsibilities, and the most important implementation realities.</p>
+        <div class="cards">
+          <div class="info-card">
+            <h4>Layer 3: Orchestrator</h4>
+            <p>Single entry point that classifies requests and coordinates research, memory, code context, drafting, verification, and output.</p>
+            <ul>
+              <li>LangGraph workflow orchestration</li>
+              <li>Compliance and traceability</li>
+              <li>Spec-session and coding-task routing</li>
+            </ul>
+          </div>
+          <div class="info-card">
+            <h4>Layer 2A: Loom</h4>
+            <p>Shared automotive knowledge layer that centralizes curated ASAM/AUTOSAR facts, provenance, temporal state, retrieval, and migration management.</p>
+            <ul>
+              <li>FalkorDB-backed property graph</li>
+              <li>Graphiti adapter boundary</li>
+              <li>Temporal state and evidence-chain APIs</li>
+            </ul>
+          </div>
+          <div class="info-card">
+            <h4>Layer 2B: AMS</h4>
+            <p>Local per-engineer memory system for continuity, steering, transcripts, and bounded resume context.</p>
+            <ul>
+              <li>Retain / recall / reflect / resume</li>
+              <li>Per-objective continuity</li>
+              <li>Phase 2 integration target</li>
+            </ul>
+          </div>
+          <div class="info-card">
+            <h4>Layer 2C: CMM</h4>
+            <p>Repository-aware code structure module for call paths, impact analysis, architectural search, and code-grounded workflows.</p>
+            <ul>
+              <li>search_graph / trace_call_path</li>
+              <li>Impact analysis and architecture lookup</li>
+              <li>Used when requests need repo reasoning</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="legend">
+          <div class="legend-item">
+            <strong>Current Strength</strong>
+            The curated-source database foundation is live: structured rows, vectors, provenance chains, and temporal state bootstrap all work.
+          </div>
+          <div class="legend-item">
+            <strong>Current Fallback</strong>
+            Community summaries are generated and searched locally from a cache file because direct `CommunitySummary` graph writes remain pathological.
+          </div>
+          <div class="legend-item">
+            <strong>Current Blocker</strong>
+            Provider-backed Graphiti mutation and benchmark execution still require OpenAI or Azure OpenAI credentials in the environment.
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="notes">
+        <h3>Implementation Notes</h3>
+        <p class="section-copy">This dashboard is meant to be friendly for architecture review, implementation planning, and stakeholder walkthroughs.</p>
+        <div class="cards">
+          <div class="info-card">
+            <h4>What is rendered here</h4>
+            <p>The diagrams mirror the current `design.md` architecture plus the latest runtime realities: temporal fallback state, GraphRAG baseline retrieval, and community cache fallback.</p>
+          </div>
+          <div class="info-card">
+            <h4>Where the source lives</h4>
+            <p>The main source of truth remains <code>design.md</code>. This HTML file is a browser-friendly presentation layer for that architecture.</p>
+          </div>
+          <div class="info-card">
+            <h4>How to use it</h4>
+            <p>Use the sidebar to jump between views, the buttons to zoom or expand diagrams, and the theme toggle for dark/light review modes.</p>
+          </div>
+        </div>
+        <p class="footer-note">
+          Saved alongside the spec documents so it can be versioned with the architecture itself.
+        </p>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="diagramModal">
+    <div class="modal-shell">
+      <div class="modal-header">
+        <div>
+          <strong id="modalTitle">Diagram</strong>
+          <div class="muted">Expanded interactive view</div>
+        </div>
+        <button class="modal-close" id="modalClose">Close</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </dialog>
+
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+
+    const body = document.body;
+    const storedTheme = localStorage.getItem('loom-arch-theme');
+    if (storedTheme === 'light') body.classList.add('light');
+
+    mermaid.initialize({
+      startOnLoad: true,
+      securityLevel: 'loose',
+      theme: 'neutral',
+      flowchart: { curve: 'basis' },
+      sequence: { showSequenceNumbers: false },
+    });
+
+    const smoothScrollButtons = document.querySelectorAll('[data-scroll]');
+    smoothScrollButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const target = document.querySelector(button.dataset.scroll);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      body.classList.toggle('light');
+      localStorage.setItem('loom-arch-theme', body.classList.contains('light') ? 'light' : 'dark');
+    });
+
+    const modal = document.getElementById('diagramModal');
+    const modalBody = document.getElementById('modalBody');
+    const modalTitle = document.getElementById('modalTitle');
+    document.getElementById('modalClose').addEventListener('click', () => modal.close());
+
+    function attachDiagramControls() {
+      document.querySelectorAll('.diagram-card').forEach((card) => {
+        const stage = card.querySelector('.diagram-stage');
+        const scaleEl = card.querySelector('.diagram-scale');
+        if (!stage || !scaleEl || card.dataset.bound === 'true') return;
+        card.dataset.bound = 'true';
+        let scale = 1;
+        const applyScale = () => { scaleEl.style.transform = `scale(${scale})`; };
+        card.querySelectorAll('.zoom-btn').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const action = btn.dataset.action;
+            if (action === 'zoom-in') scale = Math.min(scale + 0.1, 2.5);
+            if (action === 'zoom-out') scale = Math.max(scale - 0.1, 0.5);
+            if (action === 'reset') scale = 1;
+            if (action === 'expand') {
+              modalTitle.textContent = card.querySelector('.title')?.textContent || 'Diagram';
+              modalBody.innerHTML = '';
+              const clone = scaleEl.cloneNode(true);
+              clone.style.transform = 'scale(1)';
+              modalBody.appendChild(clone);
+              modal.showModal();
+              return;
+            }
+            applyScale();
+          });
+        });
+        applyScale();
+      });
+    }
+
+    const observer = new MutationObserver(() => attachDiagramControls());
+    observer.observe(document.body, { childList: true, subtree: true });
+    window.addEventListener('load', () => {
+      setTimeout(attachDiagramControls, 600);
+    });
+  </script>
+</body>
+</html>

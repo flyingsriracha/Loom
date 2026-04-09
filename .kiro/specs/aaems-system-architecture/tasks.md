@@ -1,0 +1,408 @@
+# Implementation Plan: Loom System (Full Development)
+
+## Overview
+
+This plan covers full Loom development across all major phases, using the updated `requirements.md` and `design.md` as the source of truth.
+
+Loom is an internal automotive engineering product that supports:
+
+- standards-grounded research against ASAM and AUTOSAR knowledge
+- spec-session authoring for `requirements.md`, `design.md`, and `tasks.md`
+- development execution with knowledge, memory, and code-structure support
+
+Phase 1 seeds Loom from two curated source systems:
+
+- `tools/ASAMKnowledgeDB`
+- `tools/autosar-fusion`
+
+Guiding rules for execution:
+
+- Graphiti is required, not optional.
+- Preserve provenance, fusion history, and cleanup lineage.
+- No mock migration or integration data.
+- Validate on Windows WSL2 early.
+- Update `loom-progress.md` at milestones and handoff points.
+- Treat the orchestrator as the user-facing entry point, even if internal services are built in layers.
+
+Implementation stack:
+
+- Python 3.11+
+- FalkorDB
+- Graphiti
+- FastMCP
+- FastAPI
+- LangGraph
+- Hindsight
+- codebase-memory-mcp
+- pytest + Hypothesis
+
+## Tasks
+
+- [ ] 1. Phase 1 foundation and project scaffolding
+  - [x] 1.1 Define the runtime package layout for Loom services, orchestrator, migration, ingestion, artifacts, and tests.
+    - Create the top-level package structure under `loom/` for `services`, `graph`, `retrieval`, `migration`, `ingestion`, `artifacts`, `orchestrator`, and `tests`.
+    - Establish configuration loading, dependency boundaries, and import conventions.
+    - _Requirements: 10.1, 14.3_
+  - [x] 1.2 Create environment and configuration templates.
+    - Add `.env.example` with FalkorDB, Graphiti, API, auth, and optional Hindsight settings.
+    - Define environment variable naming conventions for local vs production deployment.
+    - _Requirements: 14.3, 12.2_
+  - [x] 1.3 Create the base Docker Compose stack.
+    - Add FalkorDB, Loom services, and Orchestrator containers.
+    - Reserve Hindsight as a later-phase container profile instead of requiring it for Phase 1.
+    - _Requirements: 14.1, 14.2, 14.6_
+  - [x] 1.4 Add startup health checks and service readiness gates.
+    - Ensure FalkorDB health, Loom service readiness, and Orchestrator readiness are queryable.
+    - _Requirements: 14.6_
+  - [ ] 1.5 Validate local boot on macOS and Windows WSL2.
+    - [x] Local macOS container boot, health checks, and append-only FalkorDB persistence have now been validated.
+    - [ ] Windows WSL2 validation remains intentionally deferred.
+    - Confirm containers start, health checks pass, and no platform-specific blockers prevent Phase 1 work.
+    - _Requirements: 14.7_
+
+- [ ] 2. FalkorDB + Graphiti platform foundation
+  - [x] 2.1 Implement the FalkorDB client layer.
+    - Add connection management, retries, timeouts, and basic health checks.
+    - _Requirements: 14.2, 14.6_
+  - [x] 2.2 Implement the Graphiti adapter layer.
+    - Pin and validate the exact Graphiti API surface against the target `graphiti-core` version before wiring production code.
+    - Configure Graphiti on top of FalkorDB using the verified FalkorDB driver/database or `group_id` strategy.
+    - Define the adapter boundary so Graphiti owns temporal state behavior while Loom owns deterministic migration, provenance, and lineage wiring.
+    - Decide whether the Loom adapter should use Graphiti `search()` or `search_()` internally for the main retrieval contract.
+    - _Requirements: 2.1, 2.2_
+  - [x] 2.3 Implement schema bootstrap for domain, provenance, audit, and artifact-lineage nodes.
+    - Create indexes, constraints, and vector index setup routines.
+    - [x] Strengthened bootstrap to enforce unique `id` constraints across domain and audit labels, with `TextChunk.embedding` aligned to 384-d imported vectors.
+    - _Requirements: 1.5, 1.6, 5.1_
+  - [x] 2.4 Implement stable identity generation.
+    - Define IDs for standards, protocols, modules, source systems, source documents, and artifact revisions.
+    - [x] Added typed identity helpers in `loom/graph/identities.py` and applied them in migration paths.
+    - _Requirements: 2.2, 5.1, 18.3_
+  - [x] 2.5 Implement migration-run and audit metadata models.
+    - Create the canonical structure for `MigrationRun`, source registry, and audit event recording.
+    - [x] Added `MigrationRun` + `AuditEvent` graph persistence in deterministic migration path with per-table audit records.
+    - _Requirements: 1.7, 5.5_
+  - [x] 2.6 Add foundational tests for client, adapter, schema, and bootstrap behavior.
+    - [x] Added first-pass tests for schema bootstrap and curated-source scanning foundations in `loom/tests/`.
+    - [x] Added client and adapter unit tests (`FalkorDBClient` selection behavior and Graphiti search fallback contract).
+    - _Requirements: 1.5, 2.1, 14.6_
+  - [x] 2.7 Run a Graphiti adapter spike on representative structured JSON episodes.
+    - [x] Added Graphiti smoke validation for index bootstrap + JSON episode ingestion (`spikes/graphiti_smoke_test.py`).
+    - [x] Added latest-API benchmark harness (`spikes/graphiti_benchmark.py`) covering sequential `add_episode`, bulk `add_episode_bulk`, search/search_ probes, and invalidation-edge checks.
+    - [x] Live provider-backed benchmark executed against Azure GPT-5.4 mini using `2025-03-01-preview` plus local MiniLM embedder fallback.
+    - [x] Sequential `add_episode` completed for 6 episodes (~52.0s total in the latest run, ~7.2s-9.7s per episode).
+    - [x] Focused temporal smoke confirmed provider-backed `retrieve_episodes` and `graphiti_search` work for a fresh group (`2` retrieved episodes, `5` search hits).
+    - [ ] `add_episode_bulk` remains partially incompatible with Azure GPT-5 because an internal Graphiti path still emits `max_tokens`; a reduced 2-episode bulk retry succeeds when UUIDs are omitted, but the full benchmark path is not yet clean.
+    - Validate `add_episode`, `add_episode_bulk`, custom entity and edge types, invalidation behavior, and LLM cost or latency.
+    - Confirm that bulk vector stores will be imported directly rather than re-ingested through Graphiti episode extraction.
+    - _Requirements: 2.1, 2.2, 4.3_
+
+- [x] 3. ASAM curated source migration (`tools/ASAMKnowledgeDB`)
+  - [x] 3.0 Implement curated-source scanning foundation for migration planning.
+    - Add SQLite scanning and profiling for table/row/metadata discovery and baseline migration report seeding.
+    - _Requirements: 1.1, 1.7_
+  - [x] 3.1 Implement structured ASAM table migration.
+    - [x] Added deterministic mapping foundation for `xcp_commands`, `xcp_errors`, `xcp_events`, and `protocol_parameters` with dry-run + limited-write execution path.
+    - [x] Executed initial full-table live migration for the first 4 ASAM tables (baseline step).
+    - Migrate domain tables such as commands, errors, events, parameters, and related ASAM entities.
+    - [x] Expanded deterministic coverage to additional ASAM structured tables (`mdf_*`, `odx_*`, `domain_glossary`), then executed full live migration (clean expanded ASAM run now produces `673` structured nodes).
+    - Preserve `source_pipeline`, `confidence`, `source_file`, and source identity.
+    - Use deterministic curated-table mapping for seed migration; do not rely on Graphiti LLM extraction as the sole source of truth for migrated facts.
+    - _Requirements: 1.1, 1.3, 5.1_
+  - [x] 3.2 Implement Docling reference-table migration.
+    - Migrate raw reference tables into the graph as reference-layer nodes rather than authoritative facts.
+    - [x] Imported ASAM `docling_tables` as `mapping_category=reference` nodes.
+    - _Requirements: 1.1, 5.1_
+  - [x] 3.3 Import ASAM vector context.
+    - Load the ASAM vector store into graph-connected content nodes and keep vector metadata intact.
+    - [x] Implemented direct Chroma collection import in `loom/migration/vector_import.py` and executed full ASAM import (`74086` `TextChunk` nodes with real 384-d embeddings persisted in FalkorDB).
+    - Import existing chunk stores directly instead of routing them through Graphiti episode extraction.
+    - _Requirements: 1.6, 3.1_
+  - [x] 3.4 Import ASAM fusion audit history.
+    - Convert `comparison_report` and `fusion_log` into audit nodes or linked migration metadata.
+    - [x] Imported ASAM fusion audit tables as `FusionAssessment` nodes (`mapping_category=audit`) and linked runs/events.
+    - _Requirements: 1.1, 5.5_
+  - [x] 3.5 Reconcile ASAM migration output.
+    - Produce a migration report with row reconciliation, provenance coverage, and skipped-record reasons.
+    - [x] Added per-table reconciliation output and validated zero-delta ASAM reconciliation in the latest clean run.
+    - _Requirements: 1.7, 1.8_
+
+- [x] 4. AUTOSAR curated source migration (`tools/autosar-fusion`)
+  - [x] 4.0 Reuse curated-source scanning foundation for AUTOSAR migration planning.
+    - Validate table/profile coverage and pipeline distribution against `autosar_fused.db` before deterministic mappings.
+    - _Requirements: 1.2, 1.7_
+  - [x] 4.1 Implement structured AUTOSAR table migration.
+    - [x] Added deterministic mapping foundation for `autosar_cp_modules`, `autosar_cp_interfaces`, `fibex_elements`, and `dcp_concepts` with dry-run + limited-write execution path.
+    - [x] Executed initial full-table live migration for the first 4 AUTOSAR tables (baseline step).
+    - Migrate AUTOSAR, FMI, SSP, DCP, FIBEX, XIL, and related concept tables into the graph.
+    - [x] Expanded deterministic structured coverage and executed a clean AUTOSAR structured run (`1783` nodes).
+    - Preserve source pipeline and cleanup provenance.
+    - Use deterministic curated-table mapping for seed migration; do not rely on Graphiti LLM extraction as the sole source of truth for migrated facts.
+    - _Requirements: 1.2, 1.3, 5.1_
+  - [x] 4.2 Implement AUTOSAR reference-table migration.
+    - Migrate copied Docling reference tables as supporting context, not as authoritative replacements for fused facts.
+    - [x] Imported AUTOSAR `docling_tables` plus `research_papers` as reference-layer context (`31619` rows total across reference assets).
+    - _Requirements: 1.2, 5.1_
+  - [x] 4.3 Import AUTOSAR vector context.
+    - Load copied vector-store context and preserve inherited provenance from `virtualECU_text_ingestion`.
+    - [x] Executed full AUTOSAR Chroma collection import (`310686` `TextChunk` nodes with real 384-d embeddings) with provenance links and pipeline/source document wiring.
+    - Import existing chunk stores directly instead of routing them through Graphiti episode extraction.
+    - _Requirements: 1.6, 3.1, 5.1_
+  - [x] 4.4 Import AUTOSAR fusion and cleanup audit history.
+    - Preserve `comparison_report`, `fusion_log`, and cleanup decisions as linked audit context.
+    - [x] Imported AUTOSAR `fusion_log` + `comparison_report` as audit-layer `FusionAssessment` nodes (`3157`).
+    - _Requirements: 1.2, 5.5_
+  - [x] 4.5 Reconcile AUTOSAR migration output.
+    - Produce a migration report with row reconciliation, provenance coverage, and coverage-scope notes.
+    - [x] Verified clean reconciliation output with zero non-zero deltas across AUTOSAR structured/reference/audit mappings.
+    - _Requirements: 1.7, 1.8_
+
+- [x] 5. Phase 1 seed migration checkpoint
+  - [x] 5.1 Run ASAM and AUTOSAR seed migration end-to-end against live FalkorDB + Graphiti.
+    - [x] Clean live reruns completed after ID/provenance/vector fixes (ASAM `2852` mapped nodes + `74086` embedded vectors; AUTOSAR `36559` mapped nodes + `310686` embedded vectors).
+  - [x] 5.2 Verify migration reports reconcile curated source systems correctly.
+    - [x] Reconciliation outputs show zero non-zero deltas for ASAM and AUTOSAR structured/reference/audit mappings.
+  - [x] 5.3 Verify provenance paths resolve from migrated fact nodes back to source system and source document.
+    - [x] Verified zero missing `DERIVED_FROM` links for ASAM/AUTOSAR mapped nodes, zero missing vector embeddings, and live `SourcePipeline` / `EXTRACTED_BY` / `BELONGS_TO` provenance chains.
+  - [x] 5.4 Record migration status and blockers in `loom-progress.md`.
+    - [x] Updated tracker with completed AUTOSAR migration milestones and revised next-step backlog.
+  - _Requirements: 1.1–1.8, 5.1–5.5_
+
+- [x] 6. Temporal model and provenance resolution
+  - [x] 6.1 Implement Graphiti-backed temporal state management for standards, protocols, modules, and requirements.
+    - [x] Added `graph/temporal.py` with a Graphiti-ready bitemporal fallback state layer (`HAS_STATE`, `validFrom`, `validTo`, `txFrom`, `txTo`) and bootstrapped `744` live state edges for `Standard`, `Protocol`, and `Module` identities.
+    - [ ] Provider-backed Graphiti episode/state mutation remains pending until LLM credentials are available for live Graphiti execution.
+    - _Requirements: 2.1, 2.2, 2.5_
+  - [x] 6.2 Implement contradiction-safe update logic.
+    - [x] Added `admin/temporal/upsert` contradiction-safe state replacement that closes prior `HAS_STATE` edges instead of overwriting history.
+    - Preserve historical state rather than overwriting prior truth.
+    - _Requirements: 2.5, 4.5_
+  - [x] 6.3 Implement time-sliced query support.
+    - [x] Added `/api/v1/temporal/query` for valid-time and transaction-time state resolution.
+    - _Requirements: 3.6, 4.5_
+  - [x] 6.4 Implement provenance resolution services.
+    - [x] Added `graph/provenance.py` resolver plus `/api/v1/node/{id}` and `/api/v1/node/{id}/provenance` endpoints that resolve source document, source pipeline, source system, and migration runs.
+    - Build the evidence chain resolver for facts, source documents, pipelines, and migration runs.
+    - _Requirements: 2.4, 5.1, 5.2_
+  - [x] 6.5 Implement provenance-filter and confidence-filter query support.
+    - [x] Added baseline `/api/v1/search` and `/api/v1/query` endpoints with source-system, source-pipeline, and min-confidence filters.
+    - _Requirements: 5.4_
+
+- [x] 7. GraphRAG retrieval pipeline
+  - [x] 7.1 Implement community detection and community summary generation.
+    - [x] Added Leiden-based community detection and summary generation over semantic domain edges.
+    - [x] Persisted community snapshots to `loom/artifacts/community_cache.json` as a fallback because live `CommunitySummary` node writes currently time out in FalkorDB.
+    - _Requirements: 2.4, 3.1, 4.4, 16.3_
+  - [x] 7.2 Implement global search over community summaries.
+    - [x] Added local-embedding global search over cached community summaries.
+    - _Requirements: 3.1, 16.3_
+  - [x] 7.3 Implement local search over graph + vector context.
+    - [x] Added baseline graph + vector local search that combines temporal state hits, provenance-filtered graph matches, and vector-backed `TextChunk` retrieval.
+    - Use Graphiti-backed temporal lookup where applicable.
+    - _Requirements: 3.1, 3.2, 3.6_
+  - [x] 7.4 Implement reranking.
+    - [x] Added MMR reranking for mixed graph/vector candidates.
+    - Use MMR or cross-encoder reranking as specified in design.
+    - _Requirements: 3.2_
+  - [x] 7.5 Implement response assembly with evidence chains and unverified warnings.
+    - [x] `/api/v1/query` now returns evidence chains plus warning flags for incomplete provenance/confidence.
+    - _Requirements: 3.4, 5.2, 5.3_
+  - [x] 7.6 Tune retrieval latency and fallback behavior.
+    - [x] Added explicit no-result halting behavior and local cache/community fallbacks when Graphiti/provider-backed retrieval paths are unavailable.
+    - Ensure zero-result cases halt correctly rather than allowing hallucinated domain output.
+    - _Requirements: 3.3, 3.5_
+
+- [x] 8. Loom service layer
+  - [x] 8.1 Implement the internal Loom service API.
+    - [x] Query, search, provenance, temporal query, artifact-context, diagnostics, and incremental ingest routes are now exposed through `loom/services/app.py`.
+    - [x] Read-only baseline now exists for node lookup, provenance resolution, filtered graph search, temporal query, artifact-context, and diagnostics; ingestion remains open.
+    - Add query, search, provenance, temporal query, ingestion, and artifact-context methods.
+    - _Requirements: 3.1–3.6, 4.1–4.5, 5.1–5.4, 18.1_
+  - [x] 8.2 Implement service-level auth boundaries and internal request contracts.
+    - [x] Added API-key auth boundary (`LOOM_API_KEY` / `LOOM_ADMIN_API_KEY`) with role-aware request context propagation (`engineer_id`, `session_id`, `objective_id`).
+    - [x] Local-development bypass remains enabled when both keys are unset so local iteration is not blocked.
+    - _Requirements: 10.1, 12.2, 12.3_
+  - [x] 8.3 Add service-level health and diagnostics endpoints.
+    - [x] Added `/api/v1/diagnostics` with graph counts, cache status, auth config visibility, and provider-config status alongside health endpoints.
+    - _Requirements: 14.6_
+  - [x] 8.4 Add service-level tests for retrieval, provenance, and temporal behavior.
+    - [x] Added `loom/tests/test_services_api.py` covering auth, request context, diagnostics, artifact-context, and admin-vs-engineer access rules.
+    - _Requirements: 3.1–3.6, 5.1–5.4_
+
+- [x] 9. Incremental ingestion pipeline
+  - [x] 9.1 Implement the ingestion loader.
+    - [x] Added `ingestion/loader.py` supporting PDF, text/markdown, JSON, YAML, and CSV inputs with chunking and source-system inference.
+    - Accept PDFs and structured source inputs and dispatch to the extraction and validation stack.
+    - _Requirements: 4.1, 4.3_
+  - [x] 9.2 Implement validation and fusion hooks for new source material.
+    - [x] Added `ingestion/validation.py` with acceptance checks, warnings, and recommended extraction/validation stack guidance (`pypdf`, `docling`, `kimi-guided-validation`).
+    - Reuse the Mistral/Docling/Kimi stack when applicable.
+    - _Requirements: 4.3, 5.1_
+  - [x] 9.3 Implement graph-loading for newly ingested content.
+    - [x] Added `ingestion/graph_loader.py` to persist incremental `SourceDocument`, `SourcePipeline`, `TextChunk`, `Table`, provenance, migration-run, and semantic anchor edges.
+    - _Requirements: 4.1, 4.2, 4.5_
+  - [x] 9.4 Implement community-summary refresh for newly ingested content.
+    - [x] Incremental ingest now refreshes the community cache through `ingestion/community.py` and the retrieval pipeline.
+    - _Requirements: 4.4_
+  - [x] 9.5 Implement supplementary AUTOSAR raw-document ingestion flow.
+    - [x] Live smoke test verified supplementary AUTOSAR JSON ingestion through `/api/v1/ingest`, including graph load, retrieval visibility, and post-test cleanup.
+    - Treat unprocessed raw AUTOSAR documents as future ingestion work, not seed-migration blockers.
+    - _Requirements: 4.2, 4.3, 4.6_
+
+- [x] 10. Orchestrator foundation
+  - [x] 10.1 Implement request classification.
+    - [x] Added heuristic request routing for `domain`, `memory`, `code`, `coding_task`, `spec_session`, and `general` in `loom/orchestrator/classifier.py`.
+    - Support `domain`, `memory`, `code`, `coding_task`, `spec_session`, and `general` routes.
+    - _Requirements: 10.2, 11.1, 18.1_
+  - [x] 10.2 Implement the LangGraph workflow engine.
+    - [x] Added LangGraph-based orchestrator workflow with research, memory, code-context, draft, and verify stages in `loom/orchestrator/workflow.py`.
+    - Include research, memory, code-context, drafting, verification, and HITL branches.
+    - _Requirements: 11.1, 11.2, 11.3_
+  - [x] 10.3 Implement orchestrator audit logging.
+    - [x] Added JSONL audit logging in `loom/artifacts/orchestrator_audit.jsonl` via `loom/orchestrator/audit.py`.
+    - _Requirements: 10.4_
+  - [x] 10.4 Implement orchestrator error handling and structured error responses.
+    - [x] Added structured `OrchestratorError` handling for downstream Loom/CMM failures and unhandled exceptions.
+    - _Requirements: 10.5_
+  - [x] 10.5 Implement the single-user-facing FastMCP server.
+    - [x] Added `loom/orchestrator/mcp_server.py` exposing `ask`, `search_knowledge`, `search_code`, `resume_session`, `generate_spec_artifact`, and `update_spec_artifact` over FastMCP/stdIO.
+    - _Requirements: 10.1, 10.3, 11.4_
+  - [x] 10.6 Implement the Orchestrator REST API with auth and RBAC.
+    - [x] Added `/api/v1/ask`, `/api/v1/search/knowledge`, `/api/v1/search/code`, `/api/v1/memory/recall`, `/api/v1/session/resume`, `/api/v1/spec/generate`, and `/api/v1/spec/update` with API-key auth and request-context propagation.
+    - _Requirements: 12.1, 12.2, 12.3_
+
+- [x] 11. Baseline CMM integration
+  - [x] 11.1 Register CMM as an orchestrator tool.
+    - [x] Added `CMMClient` subprocess bridge for `codebase-memory-mcp cli` calls.
+    - _Requirements: 13.1, 13.2_
+  - [x] 11.2 Implement direct code-query flows through CMM.
+    - [x] Added `/api/v1/search/code` and direct `search_code` / `trace_call_path` integration paths.
+    - _Requirements: 13.2, 13.3_
+  - [x] 11.3 Implement coding-task workflow grounding through CMM.
+    - [x] Coding-task routes now consult CMM before draft assembly and halt with HITL if required research/code context is missing.
+    - Ensure coding tasks consult CMM before draft output.
+    - _Requirements: 11.1, 11.5, 13.2, 13.3_
+  - [x] 11.4 Add CMM availability and stale-index warnings.
+    - [x] Health and workflow responses now surface CMM availability / index status and structured warnings when CMM is unavailable.
+    - _Requirements: 10.5, 13.4_
+
+- [x] 12. Spec-session artifact generation and lineage
+  - [x] 12.1 Implement artifact lineage storage.
+    - [x] Added graph-backed `Artifact` / `ArtifactRevision` lineage storage with `HAS_REVISION`, `REVISED_FROM`, and `SUPPORTED_BY` edges in `artifacts/lineage.py`.
+    - Create artifact and revision models tied to `objective_id`, `session_id`, and engineer identity.
+    - _Requirements: 18.2, 18.3_
+  - [x] 12.2 Implement `generate_spec_artifact` workflows.
+    - [x] Added grounded generate flow in orchestrator REST and MCP paths that renders artifact drafts, writes target files, and records revision lineage.
+    - Support `requirements`, `design`, and `tasks` generation paths.
+    - _Requirements: 18.1_
+  - [x] 12.3 Implement `update_spec_artifact` workflows.
+    - [x] Added update flow that preserves revision continuity, links `REVISED_FROM`, and carries forward unresolved items from prior content snapshots.
+    - Preserve revision continuity and unresolved decisions.
+    - _Requirements: 18.3, 18.4_
+  - [x] 12.4 Implement traceability verification before artifact output.
+    - [x] Spec routes now block output unless `objective_id`, `session_id`, steering references, and citations or engineer-provided references are present.
+    - Block artifact output if citations, lineage, or steering context are missing for standards-grounded changes.
+    - _Requirements: 11.6, 18.2, 18.5_
+  - [x] 12.5 Implement artifact audit retrieval.
+    - [x] Added `/api/v1/spec/audit` plus lineage inspection support returning revision chains and supporting evidence metadata.
+    - Let engineers inspect why an artifact changed and which evidence supported the revision.
+    - _Requirements: 18.5_
+
+- [ ] 13. Phase 1 quality, tests, and evaluations
+  - [x] 13.1 Add unit tests for migration, schema, retrieval, orchestrator, auth, and spec-session flows.
+    - [x] Added `test_artifact_lineage.py`, `test_mcp_server.py`, `test_ingestion_loader.py`, `test_ingestion_graph_loader.py`, and expanded `test_orchestrator.py` and `test_services_api.py`; suite now covers spec-session generation/update/audit, MCP entrypoints, and incremental ingestion.
+    - _Requirements: 1.5, 3.1–3.6, 10.1–10.5, 12.1–12.3, 18.1–18.5_
+  - [x] 13.2 Add property-based tests for provenance, temporal behavior, routing, persistence, and artifact lineage.
+    - [x] Added `loom/tests/test_properties.py` using Hypothesis for stable IDs, chunking bounds, route classification, and reranker invariants.
+    - _Requirements: 1.7, 2.1–2.5, 5.1–5.4, 10.2, 11.1, 18.2–18.5_
+  - [x] 13.3 Add integration tests against Docker services.
+    - [x] Added `loom/tests/test_runtime_integration.py` and executed it successfully against the live Docker stack (`RUN_DOCKER_INTEGRATION=1`); the latest rerun passes `8` tests including metrics, audit export, AMS promotion/review, bundled project seeding, and spec-session flows.
+    - _Requirements: 14.1, 14.5, 14.6, 14.7_
+  - [x] 13.4 Build retrieval evaluation suites.
+    - [x] Added and executed `loom/evals/retrieval_eval.py`, covering AUTOSAR hit, ASAM hit, and zero-result guard cases.
+    - _Requirements: 3.1–3.6, 16.1–16.4_
+  - [x] 13.5 Build spec-session evaluation suites.
+    - [x] Added and executed `loom/evals/spec_session_eval.py`, covering generate, update, and audit revision flows.
+    - _Requirements: 11.6, 18.1–18.5_
+  - [ ] 13.6 Run end-to-end validation on Windows WSL2.
+    - [ ] Intentionally deferred for now per current execution plan.
+    - _Requirements: 14.7_
+
+- [ ] 14. Phase 1 completion checkpoint
+  - [x] 14.1 Confirm an engineer can connect through one MCP server and retrieve cited ASAM/AUTOSAR answers from Loom.
+    - [x] Verified stdio FastMCP client can connect to `loom/orchestrator/mcp_server.py` and retrieve a grounded XCP answer path with citations after fallback search.
+  - [x] 14.2 Confirm curated-source migration reports are complete and accurate.
+    - [x] Live migration reports remain reconciliation-clean for both curated sources and continue to surface coverage metadata.
+  - [x] 14.3 Confirm Graphiti-backed temporal queries work.
+    - [x] Verified provider-backed Graphiti temporal smoke via sequential episode ingestion, `retrieve_episodes`, and `graphiti_search` on a fresh benchmark group.
+  - [x] 14.4 Confirm spec-session artifact generation produces traceable revisions.
+    - [x] Live HTTP smoke test verified `generate`, `update`, and `audit` flows over a test artifact with revision continuity and graph-backed lineage.
+  - [ ] 14.5 Confirm Docker startup, health checks, persistence, and Windows WSL2 validation.
+    - [x] Docker startup, service health, append-only persistence, explicit CMM host-native-only health reporting, and the latest local rerun (`8/8` Docker integration tests plus retrieval/spec-session/AMS/load eval checks) were validated locally.
+    - [ ] Windows WSL2 validation remains intentionally deferred.
+  - _Requirements: 1.1–5.5, 10.1–12.3, 14.1–14.7, 16.1–16.4, 18.1–18.5_
+
+- [x] 15. Phase 2 AMS deployment and integration
+  - [x] 15.1 Deploy Hindsight in a supported local/developer environment.
+    - [x] Live Hindsight container runs locally with Azure router for LLMs plus local embeddings in the supported developer stack.
+    - _Requirements: 6.1, 6.2_
+  - [x] 15.2 Implement AMS adapter and orchestrator integration for retain, recall, reflect, and resume.
+    - [x] HTTP and MCP surfaces now expose live `retain`, `recall`, `reflect`, and budgeted `resume` flows through `AMSClient`.
+    - _Requirements: 6.3, 7.6, 8.1_
+  - [x] 15.3 Implement project/objective/session continuity models in the live workflow.
+    - [x] Request context now carries `project_id` alongside `session_id` and `objective_id`, and AMS bank/context metadata use that continuity in live workflow paths.
+    - _Requirements: 7.1–7.6_
+  - [x] 15.4 Implement transcript persistence or transcript-reference capture.
+    - [x] Memory writes now accept transcript references/excerpts and persist transcript-reference metadata for audit/debug continuity.
+    - _Requirements: 6.6_
+  - [x] 15.5 Implement steering/progress seeding into AMS startup context.
+    - [x] `memory/seed` and MCP seeding now bundle deterministic `loom-core.md` + `loom-progress.md` summaries into a single AMS seed document.
+    - _Requirements: 9.5_
+  - [x] 15.6 Implement resume-context token budgeting and prioritization.
+    - [x] `resume` now builds a budgeted snapshot with prioritized sections for steering, open threads, recent decisions, and transcript references.
+    - _Requirements: 8.3, 8.4, 16.2_
+  - [x] 15.7 Add AMS-focused tests and evaluations.
+    - [x] Added AMS continuity unit/integration coverage plus `loom/evals/ams_eval.py`, and executed the live evaluation successfully.
+    - _Requirements: 6.1–9.5_
+
+- [x] 16. Phase 3 correction queue, practical notes, and expanded workflows
+  - [x] 16.1 Implement the correction queue data model.
+    - [x] Added graph-backed `CorrectionItem` storage covering `data_quality`, `retrieval_quality`, and `practical_knowledge` submissions.
+    - _Requirements: 17.1–17.4_
+  - [x] 16.2 Implement admin review and approval flow for knowledge corrections.
+    - [x] Added admin review endpoints that approve or reject queued corrections and optionally federate approved items.
+    - _Requirements: 17.3_
+  - [x] 16.3 Implement practical-notes graph nodes and retrieval behavior.
+    - [x] Added `PracticalNote` write/list flows, provenance wiring, schema bootstrap coverage, and retrieval visibility through graph search.
+    - _Requirements: 2.7, 17.4_
+  - [x] 16.4 Implement AMS-to-Loom promotion workflows for approved discoveries.
+    - [x] Added orchestrator HTTP/MCP promotion flows that turn AMS recall output into correction-queue submissions for admin review.
+    - _Requirements: 9.3, 17.1–17.4_
+  - [x] 16.5 Expand CMM workflow usage beyond baseline code search.
+    - [x] Added change-impact detection via `detect_changes` plus coding-task workflow enrichment for repo-aware edits.
+    - _Requirements: 13.2, 13.3_
+
+- [x] 17. Phase 4 scale, deployment, and federation
+  - [x] 17.1 Implement Azure deployment packaging and production overrides.
+    - [x] Added `.env.azure.example`, `docker-compose.azure.yml`, and deployment runbook guidance for Azure-oriented rollout.
+    - _Requirements: 14.4_
+  - [x] 17.2 Implement production auth hardening, RBAC, and operational configuration.
+    - [x] Added `LOOM_DEPLOYMENT_ENV`, `LOOM_ALLOW_LOCAL_DEV_BYPASS`, and production fail-closed auth behavior while preserving admin/engineer RBAC.
+    - _Requirements: 12.2, 12.3, 15.3_
+  - [x] 17.3 Implement federation paths for selected AMS facts.
+    - [x] Approved practical notes can now be flagged for federation and exported via `/admin/federation/export`.
+    - _Requirements: 9.4, 15.4_
+  - [x] 17.4 Run concurrent access and load validation for 10+ engineer sessions.
+    - [x] Added and executed `loom/evals/load_eval.py`; the final warm-start concurrent run passed for `10` simultaneous sessions.
+    - _Requirements: 15.1_
+  - [x] 17.5 Implement production observability, audit export, and operational runbooks.
+    - [x] Added Prometheus-style `/api/v1/metrics`, request IDs, audit export, and deployment/operations runbooks.
+    - _Requirements: 10.4, 14.6, 15.1_
+
+## Notes
+
+- This plan is phased, but the file is intended to remain the single development task list for the full product.
+- Phase 1 tasks are the most execution-ready because they are blocked only by implementation, not by unresolved product direction.
+- Later phases are intentionally less granular but still concrete enough to guide future planning.
+- `loom-progress.md` should be updated when one of the major checkpoints completes or when the plan materially changes.
+- Traceability matters: tasks should continue referencing requirements and should be kept aligned with `design.md` as the implementation evolves.

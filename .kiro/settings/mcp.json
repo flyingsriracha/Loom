@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "codebase-memory-mcp": {
+      "command": "/Users/chj1ana/.local/bin/codebase-memory-mcp",
+      "args": [],
+      "disabled": false,
+      "autoApprove": [
+        "index_repository",
+        "list_projects",
+        "search_graph",
+        "trace_call_path",
+        "detect_changes",
+        "query_graph",
+        "get_graph_schema",
+        "get_code_snippet",
+        "get_architecture",
+        "search_code",
+        "index_status",
+        "manage_adr"
+      ]
+    }
+  }
+}

@@ -1,0 +1,103 @@
+services:
+  falkordb:
+    image: falkordb/falkordb:latest
+    ports:
+      - "6379:6379"
+      - "3000:3000"
+    volumes:
+      - falkordb_data:/var/lib/falkordb/data
+    environment:
+      FALKORDB_ARGS: --timeout 0 --appendonly yes --appendfsync everysec --save "" --stop-writes-on-bgsave-error no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  loom-services:
+    build:
+      context: .
+      dockerfile: services/Dockerfile
+    ports:
+      - "8090:8090"
+    env_file:
+      - ../.kiro/runtime/ai-runtime.env
+    volumes:
+      - ../.kiro:/app/.kiro
+      - ./artifacts:/app/artifacts
+      - ./artifacts:/app/artifacts
+    environment:
+      FALKORDB_HOST: falkordb
+      FALKORDB_PORT: "6379"
+      FALKORDB_DATABASE: ${FALKORDB_DATABASE:-loom_knowledge}
+      FALKORDB_USERNAME: ${FALKORDB_USERNAME:-}
+      FALKORDB_PASSWORD: ${FALKORDB_PASSWORD:-}
+      GRAPHITI_GROUP_ID: ${GRAPHITI_GROUP_ID:-loom_knowledge}
+      LOOM_SERVICE_HOST: 0.0.0.0
+      LOOM_SERVICE_PORT: "8090"
+      SEMAPHORE_LIMIT: ${SEMAPHORE_LIMIT:-10}
+      LOOM_API_KEY: ${LOOM_API_KEY:-}
+      LOOM_ADMIN_API_KEY: ${LOOM_ADMIN_API_KEY:-}
+      LOOM_DEPLOYMENT_ENV: ${LOOM_DEPLOYMENT_ENV:-development}
+      LOOM_ALLOW_LOCAL_DEV_BYPASS: ${LOOM_ALLOW_LOCAL_DEV_BYPASS:-true}
+      LOOM_AUDIT_EXPORT_DIR: ${LOOM_AUDIT_EXPORT_DIR:-/app/artifacts/exports}
+    depends_on:
+      falkordb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8090/health', timeout=2).read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  orchestrator:
+    build:
+      context: .
+      dockerfile: orchestrator/Dockerfile
+    ports:
+      - "8080:8080"
+    env_file:
+      - ../.kiro/runtime/ai-runtime.env
+    volumes:
+      - ../.kiro:/app/.kiro
+    environment:
+      FALKORDB_HOST: falkordb
+      FALKORDB_PORT: "6379"
+      LOOM_SERVICE_URL: http://loom-services:8090
+      HINDSIGHT_HOST: ${HINDSIGHT_HOST:-hindsight}
+      HINDSIGHT_API_PORT: ${HINDSIGHT_API_PORT:-8888}
+      HINDSIGHT_MCP_PORT: ${HINDSIGHT_MCP_PORT:-9999}
+      ORCHESTRATOR_HOST: 0.0.0.0
+      ORCHESTRATOR_PORT: "8080"
+      LOOM_API_KEY: ${LOOM_API_KEY:-}
+      LOOM_ADMIN_API_KEY: ${LOOM_ADMIN_API_KEY:-}
+      LOOM_DEPLOYMENT_ENV: ${LOOM_DEPLOYMENT_ENV:-development}
+      LOOM_ALLOW_LOCAL_DEV_BYPASS: ${LOOM_ALLOW_LOCAL_DEV_BYPASS:-true}
+      LOOM_AUDIT_EXPORT_DIR: ${LOOM_AUDIT_EXPORT_DIR:-/app/artifacts/exports}
+      CMM_BINARY_PATH: ${CMM_BINARY_PATH:-codebase-memory-mcp}
+      CMM_PROJECT: ${CMM_PROJECT:-}
+      CMM_BASE_BRANCH: ${CMM_BASE_BRANCH:-main}
+    depends_on:
+      loom-services:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/v1/health', timeout=2).read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  hindsight:
+    image: ghcr.io/vectorize-io/hindsight:latest
+    profiles: ["phase2"]
+    env_file:
+      - ../.kiro/runtime/ai-runtime.env
+    ports:
+      - "8888:8888"
+      - "9999:9999"
+    volumes:
+      - hindsight_data:/home/hindsight/.pg0
+      - ../.kiro:/app/.kiro
+
+volumes:
+  falkordb_data:
+  hindsight_data:

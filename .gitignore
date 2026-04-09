@@ -1,0 +1,64 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+*.egg-info/
+dist/
+build/
+
+# Environment and secrets
+.env
+*.env
+!*.env.example
+.kiro/runtime/ai-runtime.env
+
+# Excluded project folders
+archived/
+tools/
+
+# IDE and editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Database files (if any leak outside tools/)
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Docker volumes (if mounted locally)
+data/
+falkordb_data/
+
+# Node modules (if any)
+node_modules/
+
+# Test artifacts
+.coverage
+htmlcov/
+.pytest_cache/
+.hypothesis/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Large binary artifacts
+*.bin
+*.pkl
+*.pickle
+
+# CMM binary (platform-specific, users download their own)
+loom/plugins/codebase-memory-mcp/codebase-memory-mcp

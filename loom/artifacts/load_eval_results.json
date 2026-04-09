@@ -1,0 +1,62 @@
+{
+  "base_url": "http://localhost:8090",
+  "concurrency": 10,
+  "query": "XCP CONNECT",
+  "successful_requests": 10,
+  "avg_latency_ms": 18.62,
+  "p95_latency_ms": 21.69,
+  "max_latency_ms": 21.69,
+  "target_pass": true,
+  "results": [
+    {
+      "elapsed_ms": 14.61,
+      "ok": true,
+      "result_count": 3
+    },
+    {
+      "elapsed_ms": 16.16,
+      "ok": true,
+      "result_count": 3
+    },
+    {
+      "elapsed_ms": 16.44,
+      "ok": true,
+      "result_count": 3
+    },
+    {
+      "elapsed_ms": 17.3,
+      "ok": true,
+      "result_count": 3
+    },
+    {
+      "elapsed_ms": 18.49,
+      "ok": true,
+      "result_count": 3
+    },
+    {
+      "elapsed_ms": 19.1,
+      "ok": true,
+      "result_count": 3
+    },
+    {
+      "elapsed_ms": 20.22,
+      "ok": true,
+      "result_count": 3
+    },
+    {
+      "elapsed_ms": 20.98,
+      "ok": true,
+      "result_count": 3
+    },
+    {
+      "elapsed_ms": 21.19,
+      "ok": true,
+      "result_count": 3
+    },
+    {
+      "elapsed_ms": 21.69,
+      "ok": true,
+      "result_count": 3
+    }
+  ]
+}

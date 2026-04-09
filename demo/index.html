@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loom | Agentic AI IDE for Automotive Engineering</title>
+  <meta
+    name="description"
+    content="Loom forces AI to follow real automotive standards, remember your past work, and surface the dependency impact of every code change."
+  />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="bg-pattern" aria-hidden="true"></div>
+
+  <nav class="navbar container">
+    <div class="logo">
+      <img src="Loom Logo.png" alt="Loom" class="logo-img" width="84" height="84" />
+      <span class="logo-text">LOOM</span>
+    </div>
+    <div class="nav-links">
+      <a href="#problem-solution">Why Loom</a>
+      <a href="#demo-lab">Platform Tour</a>
+      <a href="#impact">Impact</a>
+    </div>
+  </nav>
+
+  <header class="site-hero container section-fade">
+    <div class="hero-badge">THE MEMORY SYSTEM YOUR AI WAS MISSING</div>
+    <h1 class="hero-title">
+      <span class="text-muted">DON'T LET AI GUESS.</span><br />
+      CODE WITH REAL<br />
+      <span class="text-gradient">STANDARDS.</span>
+    </h1>
+    <p class="hero-subtitle">
+      Off-the-shelf AI can confidently invent safety rules, lose track of critical design decisions, and miss how one change ripples through your system.
+      Loom provides the foundational knowledge layer for intelligent development, preserves engineering intent and architecture across sessions, and surfaces dependency impact before changes spread.
+    </p>
+    <div class="hero-actions">
+      <a href="#demo-lab" class="btn btn-primary">Explore The Platform</a>
+      <a href="#problem-solution" class="btn btn-secondary">See The Problem</a>
+    </div>
+  </header>
+
+  <main>
+    <section id="problem-solution" class="panel container section-fade delay-1">
+      <div class="section-heading center">
+        <h2>WHY REGULAR AI FAILS IN AUTOMOTIVE</h2>
+        <p>Engineers using off-the-shelf AI assistants face these critical breakdowns.</p>
+      </div>
+      
+      <div class="problem-carousel">
+        <button class="problem-arrow problem-arrow-left" id="problemPrev" aria-label="Previous problem">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <div class="problem-carousel-track" id="problemTrack">
+          <article class="problem-card hover-lift">
+            <div class="problem-icon error-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 6v6l4 2"></path>
+              </svg>
+            </div>
+            <h3>Your Intent Fades Over Time</h3>
+            <p>The AI remembers your first message, but your original goal slowly drifts. After enough sessions, the agent is solving a different problem than the one you started with.</p>
+          </article>
+
+          <article class="problem-card hover-lift">
+            <div class="problem-icon error-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <ellipse cx="8" cy="8.5" rx="3.5" ry="4.5"></ellipse>
+                <ellipse cx="16" cy="8.5" rx="3.5" ry="4.5"></ellipse>
+                <ellipse cx="9" cy="15.5" rx="2.5" ry="3.5"></ellipse>
+                <ellipse cx="15" cy="15.5" rx="2.5" ry="3.5"></ellipse>
+                <line x1="12" y1="7" x2="12" y2="17"></line>
+                <path d="M12 7C11 5.2 9.5 4 8 3.4"></path>
+                <path d="M12 7C13 5.2 14.5 4 16 3.4"></path>
+              </svg>
+            </div>
+            <h3>The Butterfly Effect</h3>
+            <p>Each time the AI summarizes a chat, small details slip away. After 20+ sessions, those tiny omissions compound—and suddenly a minor note has become a core requirement, or a critical constraint has vanished entirely.</p>
+          </article>
+
+          <article class="problem-card hover-lift">
+            <div class="problem-icon error-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+              </svg>
+            </div>
+            <h3>AI Invents Safety Rules</h3>
+            <p>Standard AI confidently makes up automotive standards instead of citing real specs. In safety-critical systems, a hallucinated rule can lead to catastrophic failures.</p>
+          </article>
+
+          <article class="problem-card hover-lift">
+            <div class="problem-icon error-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+            </div>
+            <h3>Context Rot Over Time</h3>
+            <p>As conversations grow, the AI compresses away the critical details. Your original intent slowly drifts until the AI is solving the wrong problem entirely.</p>
+          </article>
+
+          <article class="problem-card hover-lift">
+            <div class="problem-icon error-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+              </svg>
+            </div>
+            <h3>Blind Code Changes</h3>
+            <p>AI suggests changes without understanding what they break. One "small fix" can cascade through safety modules, sensor drivers, and control loops you didn't even know were connected.</p>
+          </article>
+
+          <article class="problem-card hover-lift">
+            <div class="problem-icon error-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
+            <h3>No Domain Knowledge</h3>
+            <p>Generic AI doesn't understand automotive-specific concepts: AUTOSAR layers, ASAM standards, timing constraints, or the difference between ASIL-A and ASIL-D requirements.</p>
+          </article>
+
+          <article class="problem-card hover-lift">
+            <div class="problem-icon error-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
+            <h3>Dangerous Confidence</h3>
+            <p>AI sounds certain even when it's completely wrong. Without provenance or citations, you can't tell if the answer came from real documentation or thin air.</p>
+          </article>
+
+        </div>
+        <button class="problem-arrow problem-arrow-right" id="problemNext" aria-label="Next problem">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+        <nav class="problem-nav" id="problemNav">
+          <button class="problem-nav-dot is-active" data-index="0" aria-label="Problem 1"></button>
+          <button class="problem-nav-dot" data-index="1" aria-label="Problem 2"></button>
+          <button class="problem-nav-dot" data-index="2" aria-label="Problem 3"></button>
+          <button class="problem-nav-dot" data-index="3" aria-label="Problem 4"></button>
+          <button class="problem-nav-dot" data-index="4" aria-label="Problem 5"></button>
+          <button class="problem-nav-dot" data-index="5" aria-label="Problem 6"></button>
+          <button class="problem-nav-dot" data-index="6" aria-label="Problem 7"></button>
+        </nav>
+      </div>
+
+      <div class="solution-section">
+        <div class="section-heading center">
+          <h2>HOW LOOM SOLVES THIS</h2>
+          <p>Three integrated systems that force AI to work safely and accurately.</p>
+        </div>
+        
+        <div class="solution-cards">
+          <article class="solution-card hover-lift">
+            <div class="solution-icon success-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+              </svg>
+            </div>
+            <h3>Knowledge Foundation</h3>
+            <p class="solution-tagline">Grounded Truth, Not Guesswork</p>
+            <p>A graph-native automotive knowledge layer with 39,000+ mapped nodes covering ASAM and AUTOSAR standards. Every answer comes with provenance and citations so you can verify what the AI claims.</p>
+          </article>
+
+          <article class="solution-card hover-lift">
+            <div class="solution-icon success-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 6v6l4 2"></path>
+              </svg>
+            </div>
+            <h3>AMS System</h3>
+            <p class="solution-tagline">AI Memory That Actually Persists</p>
+            <p>The AI Memory Syndrome solver preserves objectives, session history, and steering rules across unlimited chat clears. The AI picks up exactly where your last session left off—no re-explaining required.</p>
+          </article>
+
+          <article class="solution-card hover-lift">
+            <div class="solution-icon success-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="18" cy="5" r="3"></circle>
+                <circle cx="6" cy="12" r="3"></circle>
+                <circle cx="18" cy="19" r="3"></circle>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+              </svg>
+            </div>
+            <h3>CMM Impact Analysis</h3>
+            <p class="solution-tagline">See the Blast Radius Before You Merge</p>
+            <p>Codebase Memory traces the call-chain and structural impact of every change. Know which safety modules, sensor drivers, and control loops are affected before the AI writes a single line.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="demo-lab" class="panel container section-fade delay-2">
+      <div class="section-heading center">
+        <h2>THE LOOM PLATFORM</h2>
+        <p>Slide through the four core layers that make Loom different from a normal coding assistant.</p>
+      </div>
+
+      <div class="carousel-nav" role="tablist" aria-label="Loom platform tour">
+        <button class="carousel-chip is-active" type="button" data-slide="0" role="tab" aria-selected="true">1. Agentic IDE</button>
+        <button class="carousel-chip" type="button" data-slide="1" role="tab" aria-selected="false">2. AUTOSAR</button>
+        <button class="carousel-chip" type="button" data-slide="2" role="tab" aria-selected="false">3. Knowledge Foundation</button>
+      </div>
+
+      <div class="carousel-shell hover-glow">
+        <button class="carousel-arrow carousel-arrow-left" type="button" id="carouselPrev" aria-label="Previous slide">
+          <span aria-hidden="true">&#8592;</span>
+        </button>
+        <div class="carousel-viewport">
+          <div class="carousel-track" id="carouselTrack">
+            <section class="tour-slide">
+              <div class="tour-pane ide-pane-v2">
+                <div class="ide-topbar ide-topbar-v2">
+                  <div class="window-dots"><span></span><span></span><span></span></div>
+                  <div class="ide-meta">Loom Agentic IDE — ETAS ETK / XCP / A2L Workflow</div>
+                  <button class="ide-replay-btn" id="ideReplayBtn" type="button">Replay Demo</button>
+                </div>
+                <div class="ide-split ide-split-v2">
+                  <div class="ide-chat">
+                    <div class="chat-header">
+                      <div>
+                        <p class="eyebrow">ENGINEERING CONVERSATION</p>
+                        <h3>ETK bring-up with XCP and A2L</h3>
+                      </div>
+                      <span class="chat-status" id="chatStatus">Ready</span>
+                    </div>
+                    <div class="chat-messages" id="chatMessages">
+                      <div class="chat-msg user-msg">
+                        <span class="msg-label">Engineer</span>
+                        <p>I am bringing up an ETAS ETK workflow for an AUTOSAR ECU. Which XCP DAQ commands do I need first, and what should I put in the A2L so INCA can read the signals correctly?</p>
+                      </div>
+                    </div>
+                    <div class="chat-input">
+                      <input type="text" placeholder="Ask Loom about ETK, XCP, A2L, AUTOSAR..." disabled />
+                      <button class="chat-send" disabled>Send</button>
+                    </div>
+                  </div>
+                  <div class="ide-results" id="ideResults">
+                    <div class="result-card">
+                      <div class="result-card-head">
+                        <p class="eyebrow">KNOWLEDGE FOUNDATION QUERY</p>
+                        <span class="result-count" id="resultCount">0 hits</span>
+                      </div>
+                      <code class="result-query" id="resultQuery">Waiting for agent...</code>
+                      <div class="source-pill-row" id="resultSources"></div>
+                    </div>
+                    <div class="result-card">
+                      <p class="eyebrow">XCP DAQ COMMANDS (ASAM MCD-1 XCP)</p>
+                      <table class="result-table" id="resultTable">
+                        <thead><tr><th>Command</th><th>Hex</th><th>Use</th></tr></thead>
+                        <tbody id="resultTableBody"></tbody>
+                      </table>
+                    </div>
+                    <div class="result-grid">
+                      <div class="result-card">
+                        <p class="eyebrow">A2L BLOCKS FOR INCA / ETK</p>
+                        <ul class="guidance-list" id="a2lList"></ul>
+                      </div>
+                      <div class="result-card">
+                        <p class="eyebrow">NEXT ENGINEERING STEP</p>
+                        <ol class="guidance-list ordered-list" id="nextSteps"></ol>
+                      </div>
+                    </div>
+                    <div class="result-card">
+                      <p class="eyebrow">SESSION MEMORY</p>
+                      <p class="result-memory" id="resultMemory">Waiting for AMS restore...</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="ide-progress-shell">
+                  <div class="ide-progress-head">
+                    <p class="eyebrow">AGENT WORKFLOW</p>
+                    <span class="thinking-chip" id="thinkingChip">WAITING</span>
+                  </div>
+                  <div class="ide-progress-bar">
+                    <div class="ide-progress-fill" id="ideProgressFill"></div>
+                  </div>
+                  <ul class="workflow-list workflow-list-compact" id="workflowList">
+                    <li class="workflow-item"><span class="workflow-step-index">1</span><span class="workflow-step-label">Restore ETK session context</span></li>
+                    <li class="workflow-item"><span class="workflow-step-index">2</span><span class="workflow-step-label">Query Knowledge Foundation</span></li>
+                    <li class="workflow-item"><span class="workflow-step-index">3</span><span class="workflow-step-label">Cross-check A2L structure</span></li>
+                    <li class="workflow-item"><span class="workflow-step-index">4</span><span class="workflow-step-label">Return verified XCP commands</span></li>
+                    <li class="workflow-item"><span class="workflow-step-index">5</span><span class="workflow-step-label">Guide the next engineering step</span></li>
+                  </ul>
+                </div>
+              </div>
+            </section>
+
+            <section class="tour-slide">
+              <div class="tour-pane ide-pane-v2">
+                <div class="ide-topbar ide-topbar-v2">
+                  <div class="window-dots"><span></span><span></span><span></span></div>
+                  <div class="ide-meta">Loom Agentic IDE — AUTOSAR Communication Stack Workflow</div>
+                  <button class="ide-replay-btn" id="autosarReplayBtn" type="button">Replay Demo</button>
+                </div>
+                <div class="ide-split ide-split-v2">
+                  <div class="ide-chat">
+                    <div class="chat-header">
+                      <div>
+                        <p class="eyebrow">ENGINEERING CONVERSATION</p>
+                        <h3>AUTOSAR BSW communication bring-up</h3>
+                      </div>
+                      <span class="chat-status" id="autosarChatStatus">Ready</span>
+                    </div>
+                    <div class="chat-messages" id="autosarChatMessages">
+                      <div class="chat-msg user-msg">
+                        <span class="msg-label">Engineer</span>
+                        <p>I need AUTOSAR-compliant CAN communication for a body ECU. Which modules define the path for periodic COM signals and UDS diagnostics, and where do CanSM and ComM fit when bus-off recovery is required?</p>
+                      </div>
+                    </div>
+                    <div class="chat-input">
+                      <input type="text" placeholder="Ask Loom about AUTOSAR Com, PduR, CanIf, CanTp, Dcm..." disabled />
+                      <button class="chat-send" disabled>Send</button>
+                    </div>
+                  </div>
+                  <div class="ide-results" id="autosarIdeResults">
+                    <div class="result-card">
+                      <div class="result-card-head">
+                        <p class="eyebrow">KNOWLEDGE FOUNDATION QUERY</p>
+                        <span class="result-count" id="autosarResultCount">0 hits</span>
+                      </div>
+                      <code class="result-query" id="autosarResultQuery">Waiting for AUTOSAR module lookup...</code>
+                      <div class="source-pill-row" id="autosarResultSources"></div>
+                    </div>
+                    <div class="result-card">
+                      <p class="eyebrow">AUTOSAR COMMUNICATION MODULES</p>
+                      <table class="result-table" id="autosarResultTable">
+                        <thead><tr><th>Module</th><th>Layer</th><th>Role</th></tr></thead>
+                        <tbody id="autosarResultTableBody"></tbody>
+                      </table>
+                    </div>
+                    <div class="result-grid">
+                      <div class="result-card">
+                        <p class="eyebrow">STACK PATHS</p>
+                        <ul class="guidance-list" id="autosarPaths"></ul>
+                      </div>
+                      <div class="result-card">
+                        <p class="eyebrow">NEXT ENGINEERING STEP</p>
+                        <ol class="guidance-list ordered-list" id="autosarNextSteps"></ol>
+                      </div>
+                    </div>
+                    <div class="result-card">
+                      <p class="eyebrow">SESSION MEMORY</p>
+                      <p class="result-memory" id="autosarMemory">Waiting for AUTOSAR project context...</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="ide-progress-shell">
+                  <div class="ide-progress-head">
+                    <p class="eyebrow">AGENT WORKFLOW</p>
+                    <span class="thinking-chip" id="autosarThinkingChip">WAITING</span>
+                  </div>
+                  <div class="ide-progress-bar">
+                    <div class="ide-progress-fill" id="autosarProgressFill"></div>
+                  </div>
+                  <ul class="workflow-list workflow-list-compact" id="autosarWorkflowList">
+                    <li class="workflow-item"><span class="workflow-step-index">1</span><span class="workflow-step-label">Restore ECU communication context</span></li>
+                    <li class="workflow-item"><span class="workflow-step-index">2</span><span class="workflow-step-label">Query Classic Platform modules</span></li>
+                    <li class="workflow-item"><span class="workflow-step-index">3</span><span class="workflow-step-label">Validate COM and DCM routing paths</span></li>
+                    <li class="workflow-item"><span class="workflow-step-index">4</span><span class="workflow-step-label">Return compliant stack layout</span></li>
+                    <li class="workflow-item"><span class="workflow-step-index">5</span><span class="workflow-step-label">Plan ARXML and BSW integration</span></li>
+                  </ul>
+                </div>
+              </div>
+            </section>
+
+            <section class="tour-slide">
+              <div class="tour-pane graph-pane graph-pane-full">
+                <div class="graph-left graph-left-full">
+                  <div class="graph-toolbar graph-toolbar-compact">
+                    <div class="query-pill">MATCH p = (m:Module)-[:ROUTES_TO|:DEFINES|:DESCRIBED_BY*1..3]-&gt;(n) WHERE m.name IN ['Com','PduR','CanIf','CanTp','Dcm','XCP','A2L'] RETURN p LIMIT 75</div>
+                    <div class="graph-chip-row">
+                      <span class="graph-chip">39,411 mapped nodes</span>
+                      <span class="graph-chip">384,763 vector nodes</span>
+                      <span class="graph-chip">744 state edges</span>
+                      <span class="graph-chip">26 communities</span>
+                    </div>
+                  </div>
+                  <div class="graph-canvas-wrap graph-canvas-wrap-full">
+                    <canvas id="falkorCanvas"></canvas>
+                    <div class="graph-spotlight">
+                      <p class="eyebrow">LIVE MATCH</p>
+                      <h3>AUTOSAR to ASAM knowledge path</h3>
+                      <div class="graph-path-pills">
+                        <span class="source-pill">Com</span>
+                        <span class="source-pill">PduR</span>
+                        <span class="source-pill">CanIf</span>
+                        <span class="source-pill">CanTp</span>
+                        <span class="source-pill">XCP</span>
+                        <span class="source-pill">A2L</span>
+                      </div>
+                      <p class="graph-spotlight-copy">Knowledge Foundation connects AUTOSAR communication modules, ASAM measurement standards, XCP command definitions, and original source documents with provenance on every edge.</p>
+                    </div>
+                    <aside class="graph-right graph-floating-right">
+                      <div class="panel-card inspector-card graph-overlay-card">
+                        <p class="eyebrow">SELECTED NODE</p>
+                        <h3 id="graphNodeName">PduR</h3>
+                        <p id="graphNodeSummary">PDU Router handling static routing between COM and DCM upper layers and CAN transport / interface modules.</p>
+                        <ul class="inspector-list">
+                          <li><span>Type</span><strong id="graphNodeType">Module</strong></li>
+                          <li><span>Confidence</span><strong id="graphNodeConfidence">0.90</strong></li>
+                          <li><span>Linked Entities</span><strong id="graphNodeLinks">18</strong></li>
+                        </ul>
+                      </div>
+                      <div class="panel-card inspector-card graph-overlay-card">
+                        <p class="eyebrow">PROVENANCE CHAIN</p>
+                        <div class="pill-stack" id="graphProvenance"></div>
+                      </div>
+                    </aside>
+                    <div class="graph-legend">
+                      <span><i class="legend-dot legend-standard"></i>Standard</span>
+                      <span><i class="legend-dot legend-module"></i>Module</span>
+                      <span><i class="legend-dot legend-artifact"></i>Artifact</span>
+                      <span><i class="legend-dot legend-source"></i>SourceDocument</span>
+                      <span><i class="legend-dot legend-chunk"></i>TextChunk</span>
+                      <span><i class="legend-dot legend-concept"></i>Concept</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section class="tour-slide">
+              <div class="tour-pane intelligence-pane-full">
+                <div class="intelligence-toolbar">
+                  <div>
+                    <p class="eyebrow">CMM + AMS SYSTEM</p>
+                    <h3>One change, one story: what breaks, what is remembered, what to do next.</h3>
+                  </div>
+                  <button class="ide-replay-btn" id="intelligenceReplayBtn" type="button">Replay Demo</button>
+                </div>
+
+                <div class="intelligence-summary-card">
+                  <div class="result-card-head">
+                    <div>
+                      <p class="eyebrow">LIVE NARRATIVE</p>
+                      <h4 id="intelligenceStatusTitle">Start with a changed symbol, not a guess</h4>
+                    </div>
+                    <span class="thinking-chip" id="intelligenceThinkingChip">WAITING</span>
+                  </div>
+                  <p id="intelligenceStatusBody">Loom turns a diff into concrete impact paths, then restores the engineering memory that should still constrain the fix.</p>
+                  <div class="source-pill-row intelligence-action-pills" id="intelligenceActionPills">
+                    <span class="source-pill" data-action-step="0">detect_changes</span>
+                    <span class="source-pill" data-action-step="1">trace_call_path</span>
+                    <span class="source-pill" data-action-step="2">recall</span>
+                    <span class="source-pill" data-action-step="3">reflect</span>
+                    <span class="source-pill" data-action-step="4">recommend</span>
+                  </div>
+                </div>
+
+                <div class="intelligence-story-grid">
+                  <article class="story-card">
+                    <p class="eyebrow">Problem</p>
+                    <h4>Context drift after session summaries</h4>
+                    <p>Without continuity, each new chat can miss small constraints until they become release blockers.</p>
+                  </article>
+                  <article class="story-card">
+                    <p class="eyebrow">Code Tracking</p>
+                    <h4>See blast radius before editing deeper</h4>
+                    <p>CMM traces inbound callers and downstream AUTOSAR paths around your changed symbol.</p>
+                  </article>
+                  <article class="story-card">
+                    <p class="eyebrow">Memory Bank</p>
+                    <h4>Restore team decisions before recommending</h4>
+                    <p>AMS System recalls prior guardrails so new answers stay aligned with earlier engineering intent.</p>
+                  </article>
+                </div>
+
+                <div class="intelligence-main-grid">
+                  <div class="trace-panel intelligence-card">
+                    <div class="subsection-head">
+                      <div>
+                        <p class="eyebrow">CODE TRACKING VIEW</p>
+                        <h3>Changed Symbol and Impact Paths</h3>
+                      </div>
+                      <span class="risk-pill risk-high" id="intelligenceRiskPill">RISK OPEN</span>
+                    </div>
+                    <div class="trace-diff-box">
+                      <pre>diff --git a/CanIf.c b/CanIf.c
+@@ CanIf_Transmit()
+- if (txPduLen > CANIF_MAX_PAYLOAD) { return E_NOT_OK; }
++ if (txPduLen > channelLimit) { return E_NOT_OK; }</pre>
+                    </div>
+                    <ul class="trace-impact-list" id="traceImpactList">
+                      <li class="trace-impact-item">PduR_ComTransmit() periodic signal path</li>
+                      <li class="trace-impact-item">PduR_DcmTransmit() diagnostic path</li>
+                      <li class="trace-impact-item">CanSM / ComM recovery behavior check</li>
+                    </ul>
+                    <div class="merge-decision-card is-warning" id="mergeDecisionCard">
+                      <p class="eyebrow">MERGE DECISION</p>
+                      <p id="intelligenceOutcomeText">Waiting for trace + memory evidence.</p>
+                    </div>
+                  </div>
+
+                  <div class="memory-panel intelligence-card">
+                    <div class="subsection-head">
+                      <div>
+                        <p class="eyebrow">AMS MEMORY BANK</p>
+                        <h3>Recovered Engineering Memory</h3>
+                      </div>
+                      <span class="risk-pill risk-good">SESSION CONTINUITY</span>
+                    </div>
+                    <p class="memory-explainer">Select any memory layer. Loom uses these facts and constraints before suggesting the next action.</p>
+                    <div class="memory-node-list">
+                      <button class="memory-node is-selected" data-memory-key="objective" type="button">Current Task</button>
+                      <button class="memory-node" data-memory-key="session-a" type="button">Mental Models</button>
+                      <button class="memory-node" data-memory-key="session-b" type="button">Observed Patterns</button>
+                      <button class="memory-node" data-memory-key="steering" type="button">Raw Facts</button>
+                      <button class="memory-node" data-memory-key="decision" type="button">Experience Facts</button>
+                      <button class="memory-node" data-memory-key="constraint" type="button">Guard Rule</button>
+                    </div>
+                    <div class="memory-detail-card">
+                      <p class="eyebrow">SELECTED MEMORY</p>
+                      <h4 id="memoryDetailTitle">Current Task</h4>
+                      <p id="memoryDetailBody">Open the exact communication path affected by the changed symbol and restore the design rules that should still govern the fix.</p>
+                      <div class="pill-stack" id="memoryDetailMeta"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="ide-progress-shell intelligence-progress-shell">
+                  <div class="ide-progress-head">
+                    <p class="eyebrow">AGENT WORKFLOW</p>
+                    <span class="thinking-chip" id="intelligenceWorkflowState">WAITING</span>
+                  </div>
+                  <div class="ide-progress-bar">
+                    <div class="ide-progress-fill" id="intelligenceProgressFill"></div>
+                  </div>
+                  <ul class="workflow-list workflow-list-compact" id="intelligenceWorkflowList">
+                    <li class="workflow-item"><span class="workflow-step-index">1</span><span class="workflow-step-label">Map changed symbols</span></li>
+                    <li class="workflow-item"><span class="workflow-step-index">2</span><span class="workflow-step-label">Trace call impact</span></li>
+                    <li class="workflow-item"><span class="workflow-step-index">3</span><span class="workflow-step-label">Recall memory bank</span></li>
+                    <li class="workflow-item"><span class="workflow-step-index">4</span><span class="workflow-step-label">Reflect with prior decisions</span></li>
+                    <li class="workflow-item"><span class="workflow-step-index">5</span><span class="workflow-step-label">Recommend safe next step</span></li>
+                  </ul>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+        <button class="carousel-arrow carousel-arrow-right" type="button" id="carouselNext" aria-label="Next slide">
+          <span aria-hidden="true">&#8594;</span>
+        </button>
+      </div>
+
+      <div class="carousel-footer">
+        <div class="carousel-dots" aria-label="Carousel pagination">
+          <button class="carousel-dot is-active" type="button" data-slide="0" aria-label="Go to slide 1"></button>
+          <button class="carousel-dot" type="button" data-slide="1" aria-label="Go to slide 2"></button>
+          <button class="carousel-dot" type="button" data-slide="2" aria-label="Go to slide 3"></button>
+        </div>
+      </div>
+    </section>
+
+    <section id="impact" class="panel impact-metrics section-fade delay-3">
+      <div class="container">
+        <div class="section-heading center">
+          <h2>THE MEASURABLE IMPACT OF LOOM</h2>
+          <p>Built to eliminate context rot, accelerate grounded retrieval, and reduce wasted AI context.</p>
+        </div>
+        <div class="metrics-grid">
+          <article class="metric-card hover-lift">
+            <div class="metric-label">SESSION CONTINUITY</div>
+            <div class="metric-value value-up"><span class="counter" data-target="100">0</span>%</div>
+            <p class="metric-desc">Designed for full retention of architecture constraints and initial project intent across unlimited chat clears.</p>
+          </article>
+          <article class="metric-card hover-lift">
+            <div class="metric-label">KNOWLEDGE RETRIEVAL</div>
+            <div class="metric-value value-up"><span class="counter" data-target="496">0</span>x</div>
+            <p class="metric-desc">Graph-native knowledge retrieval at P99 latency versus traditional approaches.</p>
+          </article>
+          <article class="metric-card hover-lift">
+            <div class="metric-label">LLM CONTEXT COST</div>
+            <div class="metric-value value-down">-<span class="counter" data-target="60">0</span>%</div>
+            <p class="metric-desc">Less token waste than full-context dumping by routing the AI to memory, graph, and structural trace on demand.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer container">
+    <div class="footer-content">
+      <div class="footer-logo">
+        <img src="Loom Logo.png" alt="Loom" class="logo-img" width="48" height="48" />
+        <span class="logo-text">LOOM</span>
+      </div>
+      <div class="footer-credit">
+        <p class="credit-name">Created by Jerry Chen</p>
+        <p class="credit-tagline">⬢ ALGORITHMIC DESIGN & MACHINE INTELLIGENCE</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "cases": [
+    {
+      "name": "autosar_e2e_library",
+      "passed": true,
+      "result_count": 3,
+      "warnings": [
+        "warning: incomplete confidence metadata"
+      ]
+    },
+    {
+      "name": "asam_xcp_connect",
+      "passed": true,
+      "result_count": 3,
+      "warnings": [
+        "warning: incomplete confidence metadata"
+      ]
+    },
+    {
+      "name": "no_results_guard",
+      "passed": true,
+      "result_count": 0,
+      "warnings": []
+    }
+  ]
+}

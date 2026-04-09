@@ -1,0 +1,410 @@
+ASAP2_VERSION 1 71
+
+/begin PROJECT Example_Project ""
+
+  /begin HEADER "Example A2L for ETAS XETK"
+    VERSION "1.0"
+    PROJECT_NO EXAMPLE_001
+  /end HEADER
+
+  /begin MODULE Example_Module ""
+
+    /begin MOD_PAR ""
+      ADDR_EPK 0x80000000
+      EPK "Example_ECU_V1.0"
+      SYSTEM_CONSTANT "EPK" "Example_ECU_V1.0"
+      CPU_TYPE "ARM_Cortex_M7"
+      ECU "Example_ECU"
+    /end MOD_PAR
+
+    /begin MOD_COMMON ""
+      BYTE_ORDER MSB_LAST
+      ALIGNMENT_BYTE 1
+      ALIGNMENT_WORD 2
+      ALIGNMENT_LONG 4
+      ALIGNMENT_FLOAT32_IEEE 4
+      ALIGNMENT_FLOAT64_IEEE 8
+    /end MOD_COMMON
+
+    /begin IF_DATA XCP
+      /begin PROTOCOL_LAYER
+        0x0105          /* XCP protocol version (1.5) */
+        1000            /* T1 timeout [ms] */
+        2000            /* T2 timeout [ms] */
+        2000            /* T3 timeout [ms] */
+        2000            /* T4 timeout [ms] */
+        2000            /* T5 timeout [ms] */
+        2000            /* T6 timeout [ms] */
+        2000            /* T7 timeout [ms] */
+        0xFF            /* MAX_CTO [bytes] — Ethernet allows up to 255  */
+        0x05DC          /* MAX_DTO [bytes] — 1500, standard Ethernet MTU */
+        BYTE_ORDER_MSB_LAST
+        ADDRESS_GRANULARITY_BYTE
+
+        OPTIONAL_CMD GET_COMM_MODE_INFO
+        OPTIONAL_CMD GET_ID
+        OPTIONAL_CMD SET_MTA
+        OPTIONAL_CMD UPLOAD
+        OPTIONAL_CMD SHORT_UPLOAD
+        OPTIONAL_CMD DOWNLOAD
+        OPTIONAL_CMD SHORT_DOWNLOAD
+        OPTIONAL_CMD GET_CAL_PAGE
+        OPTIONAL_CMD SET_CAL_PAGE
+        OPTIONAL_CMD GET_DAQ_PROCESSOR_INFO
+        OPTIONAL_CMD GET_DAQ_RESOLUTION_INFO
+        OPTIONAL_CMD GET_DAQ_LIST_INFO
+        OPTIONAL_CMD GET_DAQ_EVENT_INFO
+        OPTIONAL_CMD FREE_DAQ
+        OPTIONAL_CMD ALLOC_DAQ
+        OPTIONAL_CMD ALLOC_ODT
+        OPTIONAL_CMD ALLOC_ODT_ENTRY
+        OPTIONAL_CMD SET_DAQ_LIST_MODE
+        OPTIONAL_CMD START_STOP_DAQ_LIST
+        OPTIONAL_CMD START_STOP_SYNCH
+        OPTIONAL_CMD GET_DAQ_CLOCK
+        OPTIONAL_CMD WRITE_DAQ
+      /end PROTOCOL_LAYER
+      /begin DAQ
+        DYNAMIC
+        0               /* MAX_DAQ */
+        0               /* MAX_EVENT_CHANNEL */
+        0               /* MIN_DAQ */
+        OPTIMISATION_TYPE_DEFAULT
+        ADDRESS_EXTENSION_FREE
+        IDENTIFICATION_FIELD_TYPE_ABSOLUTE
+        GRANULARITY_ODT_ENTRY_SIZE_DAQ_BYTE
+        0x07                            /* MAX_ODT_ENTRY_SIZE_DAQ */
+        OVERLOAD_INDICATION_PID
+        /begin TIMESTAMP_SUPPORTED
+          1             /* TIMESTAMP_TICKS */
+          SIZE_DWORD
+          UNIT_1US
+        /end TIMESTAMP_SUPPORTED
+
+        /begin EVENT "10ms_Raster"
+          "10ms cyclic measurement raster"
+          0x0000                        /* event channel number              */
+          DAQ
+          0xFF                          /* max DAQ list                      */
+          0x0A                          /* cycle time (10 ms)                */
+          0x06                          /* unit: 1ms                         */
+          0x00                          /* priority                          */
+        /end EVENT
+
+        /begin EVENT "100ms_Raster"
+          "100ms cyclic measurement raster"
+          0x0001                        /* event channel number              */
+          DAQ
+          0xFF                          /* max DAQ list                      */
+          0x64                          /* cycle time (100 ms)               */
+          0x06                          /* unit: 1ms                         */
+          0x01                          /* priority                          */
+        /end EVENT
+      /end DAQ
+      /begin XCP_ON_TCP_IP
+        0x0105                          /* XCP on Ethernet version (1.5)     */
+        5555                            /* port number                       */
+        ADDRESS "192.168.1.100"         /* ECU IP address                    */
+      /end XCP_ON_TCP_IP
+
+      /begin XCP_ON_UDP_IP
+        0x0105                          /* XCP on Ethernet version (1.5)     */
+        5556                            /* port number                       */
+        ADDRESS "192.168.1.100"         /* ECU IP address                    */
+      /end XCP_ON_UDP_IP
+    /end IF_DATA
+
+    /* ============================================================ */
+    /* COMPU_METHODs - Conversion formulas                          */
+    /* ============================================================ */
+
+    /begin COMPU_METHOD CM_Identical ""
+      IDENTICAL "%6.3" ""
+    /end COMPU_METHOD
+
+    /begin COMPU_METHOD CM_Temperature ""
+      RAT_FUNC "%8.2" "degC"
+      COEFFS 0 1 -40.0 0 0 1
+    /end COMPU_METHOD
+
+    /begin COMPU_METHOD CM_Voltage ""
+      RAT_FUNC "%6.3" "V"
+      COEFFS 0 0.00488 0 0 0 1
+    /end COMPU_METHOD
+
+    /begin COMPU_METHOD CM_Percent ""
+      LINEAR "%5.1" "%"
+      COEFFS_LINEAR 0.1 0
+    /end COMPU_METHOD
+
+    /begin COMPU_METHOD CM_RPM ""
+      IDENTICAL "%7.1" "rpm"
+    /end COMPU_METHOD
+
+    /begin COMPU_METHOD CM_Boolean ""
+      TAB_VERB "%1.0" ""
+      COMPU_TAB_REF CT_OnOff
+    /end COMPU_METHOD
+
+    /begin COMPU_VTAB CT_OnOff ""
+      TAB_VERB 2
+      0 "OFF"
+      1 "ON"
+    /end COMPU_VTAB
+
+    /* ============================================================ */
+    /* RECORD_LAYOUTs                                               */
+    /* ============================================================ */
+
+    /begin RECORD_LAYOUT RL_Scalar_UBYTE
+      FNC_VALUES 1 UBYTE ROW_DIR DIRECT
+    /end RECORD_LAYOUT
+
+    /begin RECORD_LAYOUT RL_Scalar_UWORD
+      FNC_VALUES 1 UWORD ROW_DIR DIRECT
+    /end RECORD_LAYOUT
+
+    /begin RECORD_LAYOUT RL_Scalar_ULONG
+      FNC_VALUES 1 ULONG ROW_DIR DIRECT
+    /end RECORD_LAYOUT
+
+    /begin RECORD_LAYOUT RL_Scalar_FLOAT32
+      FNC_VALUES 1 FLOAT32_IEEE ROW_DIR DIRECT
+    /end RECORD_LAYOUT
+
+    /begin RECORD_LAYOUT RL_Scalar_SBYTE
+      FNC_VALUES 1 SBYTE ROW_DIR DIRECT
+    /end RECORD_LAYOUT
+
+    /begin RECORD_LAYOUT RL_Scalar_SWORD
+      FNC_VALUES 1 SWORD ROW_DIR DIRECT
+    /end RECORD_LAYOUT
+
+    /begin RECORD_LAYOUT RL_Scalar_SLONG
+      FNC_VALUES 1 SLONG ROW_DIR DIRECT
+    /end RECORD_LAYOUT
+
+    /begin RECORD_LAYOUT RL_Curve_FLOAT32
+      AXIS_PTS_X 1 FLOAT32_IEEE INDEX_INCR DIRECT
+      FNC_VALUES 2 FLOAT32_IEEE ROW_DIR DIRECT
+    /end RECORD_LAYOUT
+
+    /begin RECORD_LAYOUT RL_Map_FLOAT32
+      AXIS_PTS_X 1 FLOAT32_IEEE INDEX_INCR DIRECT
+      AXIS_PTS_Y 2 FLOAT32_IEEE INDEX_INCR DIRECT
+      FNC_VALUES 3 FLOAT32_IEEE ROW_DIR DIRECT
+    /end RECORD_LAYOUT
+
+    /* ============================================================ */
+    /* MEASUREMENTs - Signals to observe                            */
+    /* ============================================================ */
+
+    /begin MEASUREMENT EngineSpeed "Engine rotational speed"
+      FLOAT32_IEEE CM_RPM 1.0 0.0 0.0 10000.0
+      ECU_ADDRESS 0x40001000
+      FORMAT "%7.1"
+      /begin IF_DATA XCP
+        /begin DAQ_EVENT FIXED_EVENT_LIST
+          EVENT 0
+        /end DAQ_EVENT
+      /end IF_DATA
+    /end MEASUREMENT
+
+    /begin MEASUREMENT CoolantTemp "Engine coolant temperature"
+      UWORD CM_Temperature 1.0 0.0 -40.0 215.0
+      ECU_ADDRESS 0x40001004
+      FORMAT "%5.1"
+      /begin IF_DATA XCP
+        /begin DAQ_EVENT FIXED_EVENT_LIST
+          EVENT 0
+        /end DAQ_EVENT
+      /end IF_DATA
+    /end MEASUREMENT
+
+    /begin MEASUREMENT BatteryVoltage "Battery voltage"
+      UWORD CM_Voltage 1.0 0.0 0.0 25.0
+      ECU_ADDRESS 0x40001006
+      FORMAT "%5.2"
+      /begin IF_DATA XCP
+        /begin DAQ_EVENT FIXED_EVENT_LIST
+          EVENT 0
+        /end DAQ_EVENT
+      /end IF_DATA
+    /end MEASUREMENT
+
+    /begin MEASUREMENT ThrottlePosition "Throttle position"
+      UWORD CM_Percent 1.0 0.0 0.0 100.0
+      ECU_ADDRESS 0x40001008
+      FORMAT "%5.1"
+      /begin IF_DATA XCP
+        /begin DAQ_EVENT FIXED_EVENT_LIST
+          EVENT 1
+        /end DAQ_EVENT
+      /end IF_DATA
+    /end MEASUREMENT
+
+    /begin MEASUREMENT EngineRunning "Engine running status"
+      UBYTE CM_Boolean 1.0 0.0 0.0 1.0
+      ECU_ADDRESS 0x4000100A
+      BIT_MASK 0x01
+      FORMAT "%1.0"
+    /end MEASUREMENT
+
+    /begin MEASUREMENT VehicleSpeed "Vehicle speed"
+      FLOAT32_IEEE CM_Identical 1.0 0.0 0.0 300.0
+      ECU_ADDRESS 0x4000100C
+      FORMAT "%6.1"
+      PHYS_UNIT "km/h"
+      /begin IF_DATA XCP
+        /begin DAQ_EVENT FIXED_EVENT_LIST
+          EVENT 0
+        /end DAQ_EVENT
+      /end IF_DATA
+    /end MEASUREMENT
+
+    /* ============================================================ */
+    /* CHARACTERISTICs - Calibration parameters                     */
+    /* ============================================================ */
+
+    /begin CHARACTERISTIC IdleSpeed_Target "Target idle speed"
+      VALUE 0x40002000 RL_Scalar_FLOAT32 0 CM_RPM 500.0 1200.0
+      FORMAT "%6.0"
+    /end CHARACTERISTIC
+
+    /begin CHARACTERISTIC FuelInjection_BaseTime "Base fuel injection time"
+      VALUE 0x40002004 RL_Scalar_FLOAT32 0 CM_Identical 0.0 50.0
+      FORMAT "%6.2"
+      PHYS_UNIT "ms"
+    /end CHARACTERISTIC
+
+    /begin CHARACTERISTIC IgnitionAdvance_Base "Base ignition advance angle"
+      VALUE 0x40002008 RL_Scalar_FLOAT32 0 CM_Identical -10.0 60.0
+      FORMAT "%5.1"
+      PHYS_UNIT "degBTDC"
+    /end CHARACTERISTIC
+
+    /begin CHARACTERISTIC CoolantFan_OnTemp "Coolant fan activation temperature"
+      VALUE 0x4000200C RL_Scalar_FLOAT32 0 CM_Identical 50.0 120.0
+      FORMAT "%5.1"
+      PHYS_UNIT "degC"
+    /end CHARACTERISTIC
+
+    /begin CHARACTERISTIC CoolantFan_OffTemp "Coolant fan deactivation temperature"
+      VALUE 0x40002010 RL_Scalar_FLOAT32 0 CM_Identical 40.0 110.0
+      FORMAT "%5.1"
+      PHYS_UNIT "degC"
+    /end CHARACTERISTIC
+
+    /begin CHARACTERISTIC ThrottleGain_P "Throttle PID proportional gain"
+      VALUE 0x40002014 RL_Scalar_FLOAT32 0 CM_Identical 0.0 100.0
+      FORMAT "%8.4"
+    /end CHARACTERISTIC
+
+    /begin CHARACTERISTIC ThrottleGain_I "Throttle PID integral gain"
+      VALUE 0x40002018 RL_Scalar_FLOAT32 0 CM_Identical 0.0 100.0
+      FORMAT "%8.4"
+    /end CHARACTERISTIC
+
+    /begin CHARACTERISTIC ThrottleGain_D "Throttle PID derivative gain"
+      VALUE 0x4000201C RL_Scalar_FLOAT32 0 CM_Identical 0.0 100.0
+      FORMAT "%8.4"
+    /end CHARACTERISTIC
+
+    /begin CHARACTERISTIC EnableDiagMode "Enable diagnostic mode"
+      VALUE 0x40002020 RL_Scalar_UBYTE 0 CM_Boolean 0.0 1.0
+      FORMAT "%1.0"
+    /end CHARACTERISTIC
+
+    /* ============================================================ */
+    /* AXIS_PTS - Axis definitions for curves/maps                  */
+    /* ============================================================ */
+
+    /begin AXIS_PTS RPM_Axis "RPM breakpoints"
+      0x40003000 CM_RPM 8 RL_Scalar_FLOAT32 0.0 0.0 10000.0
+      DEPOSIT ABSOLUTE
+      FORMAT "%7.0"
+    /end AXIS_PTS
+
+    /begin AXIS_PTS Load_Axis "Engine load breakpoints"
+      0x40003040 CM_Percent 8 RL_Scalar_FLOAT32 0.0 0.0 100.0
+      DEPOSIT ABSOLUTE
+      FORMAT "%5.1"
+    /end AXIS_PTS
+
+    /* ============================================================ */
+    /* CURVE - 1D calibration table                                 */
+    /* ============================================================ */
+
+    /begin CHARACTERISTIC FuelMap_1D "Fuel correction vs RPM"
+      CURVE 0x40004000 RL_Curve_FLOAT32 0 CM_Identical 0.0 2.0
+      FORMAT "%6.3"
+      PHYS_UNIT "factor"
+      /begin AXIS_DESCR STD_AXIS RPM_Axis CM_RPM 8 0.0 10000.0
+        DEPOSIT ABSOLUTE
+      /end AXIS_DESCR
+    /end CHARACTERISTIC
+
+    /* ============================================================ */
+    /* MAP - 2D calibration table                                   */
+    /* ============================================================ */
+
+    /begin CHARACTERISTIC IgnitionMap_2D "Ignition advance map"
+      MAP 0x40005000 RL_Map_FLOAT32 0 CM_Identical -10.0 60.0
+      FORMAT "%5.1"
+      PHYS_UNIT "degBTDC"
+      /begin AXIS_DESCR STD_AXIS RPM_Axis CM_RPM 8 0.0 10000.0
+        DEPOSIT ABSOLUTE
+      /end AXIS_DESCR
+      /begin AXIS_DESCR STD_AXIS Load_Axis CM_Percent 8 0.0 100.0
+        DEPOSIT ABSOLUTE
+      /end AXIS_DESCR
+    /end CHARACTERISTIC
+
+    /* ============================================================ */
+    /* GROUPs - Organize signals for ETAS tool navigation           */
+    /* ============================================================ */
+
+    /begin GROUP Engine_Measurements "Engine measurement signals"
+      ROOT
+      /begin REF_MEASUREMENT
+        EngineSpeed
+        CoolantTemp
+        EngineRunning
+      /end REF_MEASUREMENT
+    /end GROUP
+
+    /begin GROUP Vehicle_Measurements "Vehicle-level measurements"
+      ROOT
+      /begin REF_MEASUREMENT
+        BatteryVoltage
+        ThrottlePosition
+        VehicleSpeed
+      /end REF_MEASUREMENT
+    /end GROUP
+
+    /begin GROUP Calibration_Scalars "Scalar calibration values"
+      ROOT
+      /begin REF_CHARACTERISTIC
+        IdleSpeed_Target
+        FuelInjection_BaseTime
+        IgnitionAdvance_Base
+        CoolantFan_OnTemp
+        CoolantFan_OffTemp
+        ThrottleGain_P
+        ThrottleGain_I
+        ThrottleGain_D
+        EnableDiagMode
+      /end REF_CHARACTERISTIC
+    /end GROUP
+
+    /begin GROUP Calibration_Tables "Curve and map calibrations"
+      ROOT
+      /begin REF_CHARACTERISTIC
+        FuelMap_1D
+        IgnitionMap_2D
+      /end REF_CHARACTERISTIC
+    /end GROUP
+
+  /end MODULE
+
+/end PROJECT
