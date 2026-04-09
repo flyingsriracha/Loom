@@ -1,37 +1,54 @@
 {
-  "retrieval_speed": {
-    "query": "XCP CONNECT",
-    "loom_p95_ms": 21.69,
-    "baselines": {
-      "sqlite_full_scan": {
-        "latency_ms": 111.95,
-        "hits": 517,
-        "vs_loom": "5.2x slower"
+  "loom_baseline": {
+    "p95_ms": 21.69,
+    "tokens_per_query": 450
+  },
+  "sqlite_baseline": {
+    "databases": {
+      "AUTOSAR": {
+        "latency_ms": 113.94,
+        "hits": 536
+      },
+      "ASAM": {
+        "latency_ms": 10.39,
+        "hits": 3469
       }
     },
-    "speedup_vs_baseline": "5x"
+    "total_ms": 124.33
   },
-  "token_savings": {
-    "traditional_rag": {
-      "chunks": 5,
-      "tokens_per_chunk": 800,
-      "total_tokens": 4000
+  "chroma_baseline": {
+    "databases": {
+      "AUTOSAR": {
+        "vectors": 310686,
+        "cold_ms": 343.98,
+        "warm_avg_ms": 37.77,
+        "warm_p95_ms": 38.29
+      },
+      "ASAM": {
+        "vectors": 74086,
+        "cold_ms": 141.71,
+        "warm_avg_ms": 38.6,
+        "warm_p95_ms": 42.19
+      }
     },
-    "loom_graphrag": {
-      "results": 3,
-      "tokens_per_result": 130,
-      "total_tokens": 390
-    },
-    "reduction_percent": 90,
-    "conservative_estimate": 60
+    "total_vectors": 384772,
+    "avg_warm_ms": 38.19
   },
-  "summary": {
-    "retrieval_claim": "5x faster than traditional search",
-    "token_claim": "60% less context than traditional RAG",
-    "notes": [
-      "Retrieval comparison: Loom graph search vs SQLite full-text scan",
-      "Token comparison: Loom targeted nodes vs traditional large-chunk RAG",
-      "Conservative estimates used for marketing claims"
-    ]
+  "chunk_analysis": {
+    "sample_size": 200,
+    "avg_chars": 2043,
+    "avg_tokens": 511,
+    "median_chars": 1942,
+    "median_tokens": 486
+  },
+  "speedups": {
+    "vs_sqlite_fullscan": 5.7,
+    "vs_chroma_warm": 1.8
+  },
+  "token_reduction_percent": 81,
+  "marketing_claims": {
+    "retrieval_speedup": "5.7x faster",
+    "token_reduction": "81% fewer tokens",
+    "latency": "21.69ms p95"
   }
 }
