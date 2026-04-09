@@ -1,0 +1,37 @@
+{
+  "retrieval_speed": {
+    "query": "XCP CONNECT",
+    "loom_p95_ms": 21.69,
+    "baselines": {
+      "sqlite_full_scan": {
+        "latency_ms": 111.95,
+        "hits": 517,
+        "vs_loom": "5.2x slower"
+      }
+    },
+    "speedup_vs_baseline": "5x"
+  },
+  "token_savings": {
+    "traditional_rag": {
+      "chunks": 5,
+      "tokens_per_chunk": 800,
+      "total_tokens": 4000
+    },
+    "loom_graphrag": {
+      "results": 3,
+      "tokens_per_result": 130,
+      "total_tokens": 390
+    },
+    "reduction_percent": 90,
+    "conservative_estimate": 60
+  },
+  "summary": {
+    "retrieval_claim": "5x faster than traditional search",
+    "token_claim": "60% less context than traditional RAG",
+    "notes": [
+      "Retrieval comparison: Loom graph search vs SQLite full-text scan",
+      "Token comparison: Loom targeted nodes vs traditional large-chunk RAG",
+      "Conservative estimates used for marketing claims"
+    ]
+  }
+}
