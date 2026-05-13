@@ -61,5 +61,8 @@ htmlcov/
 *.pkl
 *.pickle
 
+# Large export files
+loom/artifacts/exports/loom-full-export-*.jsonl
+
 # CMM binary (platform-specific, users download their own)
 loom/plugins/codebase-memory-mcp/codebase-memory-mcp
