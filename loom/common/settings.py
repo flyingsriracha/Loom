@@ -48,6 +48,7 @@ class Settings:
     hindsight_api_url: str
     loom_api_key: str | None
     loom_admin_api_key: str | None
+    loom_consumer_api_keys: tuple[str, ...]
     deployment_environment: str
     allow_local_dev_bypass: bool
     audit_export_dir: str
@@ -91,6 +92,11 @@ def load_settings() -> Settings:
         hindsight_api_url=_get('HINDSIGHT_API_URL', f'http://{hindsight_host}:{hindsight_api_port}') or f'http://{hindsight_host}:{hindsight_api_port}',
         loom_api_key=_get('LOOM_API_KEY') or None,
         loom_admin_api_key=_get('LOOM_ADMIN_API_KEY') or None,
+        loom_consumer_api_keys=tuple(
+            key.strip()
+            for key in (_get('LOOM_CONSUMER_API_KEYS', '') or '').split(',')
+            if key.strip()
+        ),
         deployment_environment=_get('LOOM_DEPLOYMENT_ENV', 'development') or 'development',
         allow_local_dev_bypass=_bool_env('LOOM_ALLOW_LOCAL_DEV_BYPASS', True),
         audit_export_dir=_get('LOOM_AUDIT_EXPORT_DIR', '/app/artifacts/exports') or '/app/artifacts/exports',

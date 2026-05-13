@@ -1,0 +1,156 @@
+{
+  "name": "loom-grounding",
+  "version": "0.1.0",
+  "description": "Grounding plugin for external AI systems (lead generation, competitive analysis, market research) that need authoritative ASAM/AUTOSAR automotive knowledge. Every response must be backed by Loom Knowledge Foundation evidence with provenance.",
+  "source_of_truth": "Loom Knowledge Foundation (FalkorDB + Graphiti). Curated from ASAMKnowledgeDB and autosar-fusion with preserved upstream provenance.",
+  "consumer_role": "external_read_only",
+  "scope": [
+    "read knowledge",
+    "resolve node provenance",
+    "cite evidence chain"
+  ],
+  "forbidden": [
+    "write to knowledge graph",
+    "ingest documents",
+    "access memory (AMS) or spec-session endpoints",
+    "hit FalkorDB or Graphiti directly",
+    "fabricate facts not returned by a tool"
+  ],
+  "auth": {
+    "type": "api_key_header",
+    "header": "X-API-Key",
+    "identity_header": "X-Engineer-Id",
+    "env_var": "LOOM_CONSUMER_API_KEYS",
+    "env_var_format": "comma-separated list of consumer keys on the Loom host",
+    "identity_value": "leadgen-agent",
+    "role": "consumer",
+    "notes": "The consumer role is enforced server-side. Consumer keys can only reach /api/v1/ask, /api/v1/search, and /api/v1/node/{id}/provenance. Any attempt to hit memory, spec-session, ingest, or admin endpoints will return HTTP 403. Every call is audited under the X-Engineer-Id identity."
+  },
+  "endpoints": {
+    "orchestrator_base_url": "http://localhost:8080",
+    "services_base_url": "http://localhost:8090"
+  },
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "loom_ask",
+        "description": "Ask Loom a natural-language automotive domain question and receive a grounded answer with citations and evidence chain. Use this as the default for any ASAM, AUTOSAR, ECU, measurement, calibration, or protocol question. Returns an answer plus supporting node IDs and provenance preview.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "The automotive question in natural language. Include competitor/product names, protocols, or standards if relevant."
+            },
+            "artifact_type": {
+              "type": "string",
+              "description": "Optional context hint. For lead generation use 'research'. For spec work use 'requirements', 'design', or 'tasks'.",
+              "enum": ["research", "requirements", "design", "tasks"]
+            }
+          },
+          "required": ["query"]
+        },
+        "http": {
+          "method": "POST",
+          "url": "{orchestrator_base_url}/api/v1/ask",
+          "body": { "query": "$query", "artifact_type": "$artifact_type" }
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "loom_search_knowledge",
+        "description": "Retrieve raw evidence chunks from the Loom Knowledge Foundation without a synthesized answer. Use when you want to reason over the source material yourself or need multiple supporting passages to compare products or protocols.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Retrieval query. Entity-heavy queries (e.g. 'ETK XCP-over-Ethernet measurement') work best."
+            },
+            "source_system": {
+              "type": "string",
+              "description": "Optional filter. 'asam' restricts to ASAM-derived nodes, 'autosar' restricts to AUTOSAR-derived nodes.",
+              "enum": ["asam", "autosar"]
+            },
+            "min_confidence": {
+              "type": "number",
+              "description": "Optional minimum confidence score (0.0-1.0). Use 0.6 or higher for customer-facing lead-gen output.",
+              "minimum": 0.0,
+              "maximum": 1.0
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Max results to return. Default 10.",
+              "minimum": 1,
+              "maximum": 50
+            }
+          },
+          "required": ["query"]
+        },
+        "http": {
+          "method": "POST",
+          "url": "{services_base_url}/api/v1/search",
+          "body": {
+            "query": "$query",
+            "source_system": "$source_system",
+            "min_confidence": "$min_confidence",
+            "limit": "$limit"
+          }
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "loom_get_node_provenance",
+        "description": "Resolve a specific node's full evidence chain: source document, source pipeline, source system, confidence, and migration run. Call this before citing a node in any external-facing output so you can attach a defensible source.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "node_id": {
+              "type": "string",
+              "description": "The node ID returned by loom_ask or loom_search_knowledge (e.g. 'ETK', 'VX1000', or a UUID)."
+            },
+            "min_confidence": {
+              "type": "number",
+              "description": "Optional minimum confidence filter for returned provenance edges.",
+              "minimum": 0.0,
+              "maximum": 1.0
+            }
+          },
+          "required": ["node_id"]
+        },
+        "http": {
+          "method": "GET",
+          "url": "{services_base_url}/api/v1/node/{node_id}/provenance",
+          "query": { "min_confidence": "$min_confidence" }
+        }
+      }
+    }
+  ],
+  "response_contract": {
+    "loom_ask": {
+      "ok": "bool — true on success",
+      "answer": "string — synthesized grounded answer",
+      "citations": "array — provenance previews with source_system, source_pipeline, confidence",
+      "supporting_node_ids": "array — node IDs used to build the answer",
+      "warnings": "array — non-fatal issues (e.g. missing provenance, fallback search used)",
+      "audit_id": "string — opaque audit reference for traceability"
+    },
+    "loom_search_knowledge": {
+      "ok": "bool",
+      "results": "array — specific node hits; each item has id, label, score, provenance_preview, source_system, confidence. EMPTY does NOT mean no grounding exists — check communities[]",
+      "communities": "array — ALWAYS read this when results[] is empty. Each item has id, summary, score, level, member_count, source_systems, standard_names. A community summary is a synthesized grounding statement over a cluster of nodes and is fully citable.",
+      "no_results": "bool — true only if BOTH results[] and communities[] are empty",
+      "audit_id": "string"
+    },
+    "loom_get_node_provenance": {
+      "ok": "bool",
+      "node": "object — node metadata",
+      "provenance": "object — evidence chain: source_document, source_pipeline, source_system, migration_run, confidence"
+    }
+  }
+}

@@ -119,6 +119,23 @@ async def _admin_context(
     )
 
 
+async def _consumer_read_context(
+    x_api_key: str | None = Header(default=None, alias='X-API-Key'),
+    x_engineer_id: str | None = Header(default=None, alias='X-Engineer-Id'),
+    x_session_id: str | None = Header(default=None, alias='X-Session-Id'),
+    x_objective_id: str | None = Header(default=None, alias='X-Objective-Id'),
+    x_project_id: str | None = Header(default=None, alias='X-Project-Id'),
+) -> APIRequestContext:
+    dependency = build_api_auth_dependency(settings, allow_consumer=True)
+    return await dependency(
+        x_api_key=x_api_key,
+        x_engineer_id=x_engineer_id,
+        x_session_id=x_session_id,
+        x_objective_id=x_objective_id,
+        x_project_id=x_project_id,
+    )
+
+
 def _with_context(payload: dict, context: APIRequestContext) -> dict:
     return {**payload, 'request_context': context.to_dict()}
 
@@ -235,7 +252,7 @@ async def api_diagnostics(context: APIRequestContext = Depends(_read_context)) -
 
 
 @app.post('/api/v1/search')
-async def api_search(request: SearchRequest, context: APIRequestContext = Depends(_read_context)) -> dict:
+async def api_search(request: SearchRequest, context: APIRequestContext = Depends(_consumer_read_context)) -> dict:
     client = FalkorDBClient(settings=settings)
     pipeline = RetrievalPipeline(client=client)
     try:
@@ -397,7 +414,7 @@ async def api_node_provenance(
     source_system: str | None = Query(None),
     source_pipeline: str | None = Query(None),
     min_confidence: float | None = Query(None, ge=0.0, le=1.0),
-    context: APIRequestContext = Depends(_read_context),
+    context: APIRequestContext = Depends(_consumer_read_context),
 ) -> dict:
     client = FalkorDBClient(settings=settings)
     resolver = ProvenanceResolver(client=client)

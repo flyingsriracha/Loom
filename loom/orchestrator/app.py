@@ -151,6 +151,23 @@ async def _read_admin_context(
     )
 
 
+async def _read_consumer_context(
+    x_api_key: str | None = Header(default=None, alias='X-API-Key'),
+    x_engineer_id: str | None = Header(default=None, alias='X-Engineer-Id'),
+    x_session_id: str | None = Header(default=None, alias='X-Session-Id'),
+    x_objective_id: str | None = Header(default=None, alias='X-Objective-Id'),
+    x_project_id: str | None = Header(default=None, alias='X-Project-Id'),
+) -> APIRequestContext:
+    dependency = build_api_auth_dependency(settings, allow_consumer=True)
+    return await dependency(
+        x_api_key=x_api_key,
+        x_engineer_id=x_engineer_id,
+        x_session_id=x_session_id,
+        x_objective_id=x_objective_id,
+        x_project_id=x_project_id,
+    )
+
+
 def _require_spec_traceability_context(context: APIRequestContext) -> None:
     missing = []
     if not context.session_id:
@@ -263,7 +280,7 @@ async def health_service(service_name: str) -> dict:
 
 
 @app.post('/api/v1/ask')
-async def ask(payload: AskPayload, context: APIRequestContext = Depends(_read_context)) -> dict:
+async def ask(payload: AskPayload, context: APIRequestContext = Depends(_read_consumer_context)) -> dict:
     workflow = OrchestratorWorkflow(
         loom_client=LoomServiceClient(settings=settings),
         cmm_client=CMMClient(settings=settings),

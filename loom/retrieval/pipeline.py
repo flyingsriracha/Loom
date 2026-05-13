@@ -30,7 +30,9 @@ class RetrievalPipeline:
     def ensure_communities(self, *, refresh: bool = False) -> dict[str, Any]:
         if refresh:
             return self.community_builder.refresh()
-        count = self.client.query('MATCH (c:CommunitySummary) RETURN count(c)').result_set[0][0]
+        count = self.client.query(
+            'MATCH (c) WHERE c:Community OR c:CommunitySummary RETURN count(c)'
+        ).result_set[0][0]
         if int(count) == 0:
             return self.community_builder.refresh()
         return {'communities_created': 0, 'skipped': True}

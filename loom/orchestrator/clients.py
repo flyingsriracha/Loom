@@ -62,7 +62,7 @@ class LoomServiceClient:
 
     def post(self, path: str, payload: dict[str, Any], *, context: APIRequestContext) -> dict[str, Any]:
         try:
-            with httpx.Client(base_url=self.settings.loom_service_url, timeout=60.0) as client:
+            with httpx.Client(base_url=self.settings.loom_service_url, timeout=180.0) as client:
                 response = client.post(path, json=payload, headers=self._headers(context))
             response.raise_for_status()
             return response.json()

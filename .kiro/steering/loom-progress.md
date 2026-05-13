@@ -4,7 +4,7 @@ inclusion: manual
 
 # Progress Tracker — Loom
 
-Last updated: 2026-04-08
+Last updated: 2026-04-22
 
 ## Current Task
 All non-WSL Loom runtime work remains complete locally. Parallel demo work under `demo/` is still a validated static marketing prototype with 3 interactive slides, benchmark-backed KPI claims, and defensible comparison cards.
@@ -90,6 +90,10 @@ Next focus: refine the portal UX, add optional LangSmith instrumentation, run li
 - Portal live smoke: COMPLETE (initial) — local orchestrator on `127.0.0.1:8081` and portal dev server on `127.0.0.1:3001` were exercised successfully; trace and overview endpoints returned live data from the current code
 - Portal browser validation: COMPLETE — guided examples, explicit connect/apply flow, trace rendering, metric refresh, and timeline updates were validated in a live browser session; remaining hydration warning is a dev-only browser-tool artifact
 - Demo release gate: UPDATED — slide 4 (CMM + AMS) is intentionally hidden from carousel controls for Vercel deployment until narrative/design is finalized
+- External-consumer grounding plugin: IMPLEMENTED — `loom/plugins/loom-grounding/` ships a portable plugin pack (`manifest.json` with OpenAI-function tool schemas, `system_prompt.md` generic grounding discipline, `claude_prompt.md` Claude-specific grounding prompt, `README.md` integration steps) so external AI systems consume Loom read-only via `loom_ask`, `loom_search_knowledge`, and `loom_get_node_provenance`
+- Consumer role hardening: IMPLEMENTED — new `LOOM_CONSUMER_API_KEYS` CSV env plus `consumer` role in `common/auth.py`; server-side scope lock restricts consumer keys to `/api/v1/ask` (orchestrator) and `/api/v1/search` + `/api/v1/node/{id}/provenance` (services), with HTTP 403 on memory/spec/admin/ingest endpoints; `build_api_auth_dependency` now takes `allow_consumer` flag (mutually exclusive with `admin_only`); 7 new consumer-role unit tests pass alongside existing auth tests
+- Dev research access: IMPLEMENTED — `LOOM_ADMIN_API_KEY` populated in `.kiro/runtime/ai-runtime.env` for dev-phase use by a sibling research AI; `loom/plugins/loom-grounding/research_prompt.md` is the single-file admin-access prompt that teaches the other AI how to use `/api/v1/ask`, `/api/v1/search`, and `/api/v1/node/{id}/provenance` with the hallucination traps and grounding format already baked in. Rotate admin key before productization.
+- Grounding stack fixes (validated end-to-end): IMPLEMENTED — three real infrastructure bugs fixed after a live smoke test from a sibling `localagent` system: (1) `retrieval/pipeline.py` `ensure_communities` checked only `:CommunitySummary` but communities now persist as `:Community`, causing a full rebuild on every cold search (30-60s); now checks both labels so cold search is ~1.8s. (2) `orchestrator/clients.py` upstream HTTP timeout was 60s which was shorter than the legitimate cold `/api/v1/artifact/context` latency, causing `/api/v1/ask` to return 502; bumped to 180s. (3) `docker-compose.yml` `environment:` blocks used `${LOOM_ADMIN_API_KEY:-}` defaults that masked the `env_file`-provided value; removed the overrides so `env_file` takes effect. End-to-end smoke now passes: `/api/v1/search` returns results+communities with ETK/FETK/VX1000/XCP grounding in ~1.8s, `/api/v1/ask` returns citations+knowledge+communities in ~6s.
 - Graph restore on corrected volume: COMPLETE — full curated graph was restored after fixing the FalkorDB data mount and currently reports `39411` mapped nodes, `384763` vector nodes, `744` state edges, and `26` community nodes
 - Local persistence root-cause fixed: COMPLETE — FalkorDB volume now mounts to `/var/lib/falkordb/data`, and append-only persistence survives restart for new writes
 - Foundational tests: IMPLEMENTED — unit tests for schema bootstrap skip behavior and curated-source scanner profile loading now exist in `loom/tests/`
